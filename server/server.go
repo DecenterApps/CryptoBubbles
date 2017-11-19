@@ -27,9 +27,8 @@ func main() {
 	})
 
 	http.Handle("/socket.io/", server)
-	http.Handle("/", http.FileServer(http.Dir("../frontend/src")))
 
-	log.Println("Listening at port 3300")
+	log.Println("Listening at port 6000")
 
-	log.Fatal(http.ListenAndServe(":3300", nil))
+	log.Fatal(http.ListenAndServe(":6000", nil))
 }
