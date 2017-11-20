@@ -15,27 +15,24 @@ var definePlugin = new webpack.DefinePlugin({
 
 module.exports = {
   entry: {
-    app: [
-      'babel-polyfill',
-      path.resolve(__dirname, 'src/main.js')
-    ],
-    vendor: ['pixi', 'p2', 'phaser', 'webfontloader']
+      game: path.resolve(__dirname, 'src/game/main.js'),
+      menu: path.resolve(__dirname, 'src/menu/lobby.jsx'),
   },
   devtool: 'cheap-source-map',
   output: {
     pathinfo: true,
     path: path.resolve(__dirname, 'dist'),
     publicPath: './dist/',
-    filename: 'bundle.js'
+    filename: '[name].js'
   },
   watch: true,
   plugins: [
     definePlugin,
-    new webpack.optimize.CommonsChunkPlugin({ name: 'vendor'/* chunkName= */, filename: 'vendor.bundle.js'/* filename= */}),
+    // new webpack.optimize.CommonsChunkPlugin({ name: 'filename'/* chunkName= */, filename: 'filename.js'/* filename= */}),
     new HtmlWebpackPlugin({
-      filename: '../index.html',
-      template: './src/index.html',
-      chunks: ['vendor', 'app'],
+      filename: '../game.html',
+      template: './src/game/game.html',
+      chunks: ['game', 'menu'],
       chunksSortMode: 'manual',
       minify: {
         removeAttributeQuotes: false,
@@ -60,6 +57,14 @@ module.exports = {
   module: {
     rules: [
       { test: /\.js$/, use: ['babel-loader'], include: path.join(__dirname, 'src') },
+      {
+        test   :/\.jsx?$/,
+        exclude:/(node_modules|bower_components)/,
+        loader :'babel-loader',
+        query  :{
+            presets:['preact','es2015']
+        }
+      },
       { test: /pixi\.js/, use: ['expose-loader?PIXI'] },
       { test: /phaser-split\.js$/, use: ['expose-loader?Phaser'] },
       { test: /p2\.js/, use: ['expose-loader?p2'] }
