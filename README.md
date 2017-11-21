@@ -6,7 +6,7 @@
  You can run the server by going to /server and running `go run server.go`
  Server listens on port 6000
 
- -- Frontend
+ - Frontend
  The game is written in Phaser and opensource game engine.
  The menu and other settings are written in Preact a lightweight version on React.
 

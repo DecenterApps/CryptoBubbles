@@ -23,6 +23,7 @@
         "clean-webpack-plugin": "^0.1.17",
         "copy-webpack-plugin": "^4.2.0",
         "cordova": "^7.1.0",
+        "css-loader": "^0.28.7",
         "eslint": "^4.3.0",
         "eslint-config-standard": "^10.2.1",
         "eslint-plugin-import": "^2.7.0",
@@ -36,6 +37,9 @@
     "dependencies": {
         "phaser-ce": "^2.8.3",
         "preact": "^8.2.6",
+        "style-loader": "^0.19.0",
+        "truffle-contract": "^3.0.1",
+        "web3": "0.20.2",
         "webfontloader": "^1.6.28"
     },
     "cordova": {

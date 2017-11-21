@@ -100,13 +100,20 @@ contract GameManager {
     // This is called by someone (server || some user) ?
     // Only when the state if verified by everyone in gameEnds
     // The user submits the state, probably better packed than this?
-    function submitState(GameState[] state) public {
-        require(playersVoted == true);
-        require(keccak256(state) == currStateHash);
-
-        for (uint i = 0; i < state.length; ++i) {
-            balances[state[i].user] = state[i].score;
+    function submitState(address[] users, uint[] scores) public {
+        require(playersVoted == true && users.length == scores.length);
+        
+        GameState[] state;
+        
+        for (uint i = 0; i < users.length; ++i) {
+            balances[users[i]] += scores[i];
+            state[i] = GameState({
+               user: users[i],
+               score: scores[i]
+            });
         }
+        
+        // sha3(state);
 
         newGameSession();
     }
