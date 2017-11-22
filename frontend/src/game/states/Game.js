@@ -24,6 +24,9 @@ export default class extends Phaser.State {
   }
 
   update() {
+
+    this.socket.emit('move', this.player.pos);
+
     if (this.game.physics.arcade.distanceToPointer(this.player, this.game.input.activePointer) > 8)
     {
         this.game.physics.arcade.moveToPointer(this.player, 300);

@@ -10,6 +10,11 @@ import (
 	// web3 "github.com/regcostajr/go-web3"
 )
 
+type Position struct {
+	x int
+	y int
+}
+
 func main() {
 	server, err := socketio.NewServer(nil)
 
@@ -26,6 +31,10 @@ func main() {
 
 		sock.On("disconnection", func() {
 			log.Println("Socket disconnected")
+		})
+
+		sock.On("move", func(pos Position) {
+			log.Println("Move received");
 		})
 	})
 

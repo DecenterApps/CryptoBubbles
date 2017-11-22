@@ -32,7 +32,7 @@ module.exports = {
     new HtmlWebpackPlugin({
       filename: '../game.html',
       template: './src/game/game.html',
-      chunks: ['game', 'menu'],
+      chunks: ['game'],
       chunksSortMode: 'manual',
       minify: {
         removeAttributeQuotes: false,
