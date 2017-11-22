@@ -18,8 +18,13 @@ class Lobby extends Component {
             web3: null,
             gameManagerInstance: null,
             gameTokenInstance: null,
-            tokenBalance: 0
+            tokenBalance: 0,
+            tokensSubmited: 0,
+            address: ""
         }
+
+        this.joinGame = this.joinGame.bind(this);
+        this.onInputChange = this.onInputChange.bind(this);
     }
 
     async componentWillMount() {
@@ -29,6 +34,8 @@ class Lobby extends Component {
           this.setState({
               web3,
           });
+
+
 
           await this.setupContracts();
           await this.getTokenBalance();
@@ -44,8 +51,8 @@ class Lobby extends Component {
         gameTokenContract.setProvider(this.state.web3.currentProvider);
 
         try {
-            const gameTokenInstance = await gameTokenContract.at("0x2e681a5e31031507d42596bfc415387d43752f96");
-            const gameManagerInstance = await gameManagerContract.at("0x98f3482a065680e05fbc7147beadaa6f9d624259");
+            const gameTokenInstance = await gameTokenContract.at("0x94bc1c5d29d0e084f9d711b230ab2f2aa201cc29");
+            const gameManagerInstance = await gameManagerContract.at("0x8b587afd2a01f4ce66b5920a5c0272f92285ca50");
                 
             this.setState({
                 gameTokenInstance,
@@ -65,12 +72,39 @@ class Lobby extends Component {
         });
     }
 
+    async joinGame() {
+        const numTokens = this.state.tokensSubmited;
+        const managerInstance = this.state.gameManagerInstance;
+
+        console.log(web3.eth.accounts[0]);
+
+        const res = await managerInstance.joinGame(web3.eth.accounts[0], numTokens, {from: web3.eth.accounts[0]});
+
+        console.log(res);
+
+        this.setState({
+            tokensSubmited: 0
+        });
+    }
+
+    onInputChange(event) {
+
+        const name = event.target.name;
+        const value = event.target.value;
+
+        this.setState({
+           [name]: value 
+        });
+    }
+
     render() {
         return (
             <div className="main-form">
                 <div>Lobby of the game</div>
                 <h3>Token Balance: { this.state.tokenBalance }</h3>
-                <a href="game.html">Enter game</a>
+
+                <input type="text" name="tokensSubmited" val={ this.state.tokensSubmited } onChange={ this.onInputChange }/>
+                <button onClick={ this.joinGame }>Join Game</button>
             </div>
         )
     }

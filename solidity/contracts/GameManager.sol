@@ -4,34 +4,23 @@ import "./GameToken.sol";
 
 contract GameManager {
 
-    modifier onlyCurrentPlayer {
-        require(games[currGameSession].gameBalances[msg.sender] > 0);
-        _;
-    }
-
     modifier onlyOwner {
         require(msg.sender == owner);
         _;
     }
 
-    struct GameSession {
-        mapping (address => uint) gameBalances;
-        uint numPlayers;
-    }
+    uint32[] gameBalances;
+    uint numPlayers;
+    mapping (uint => address) userPosition;
 
-    struct GameState {
-        address user;
-        uint256 score;
-    }
-
-    mapping (uint => GameSession) games;
     mapping (address => uint) public balances;
+    
+    mapping (address => bool) public hasVoted;
 
     address public owner;
     GameToken public gameToken;
 
     bytes32 public currStateHash;
-    uint public currGameSession;
     uint public numStateVerified;
     bool public gameInProgress;
     bool public callTheServer;
@@ -42,7 +31,6 @@ contract GameManager {
     uint MIN_PLAYERS = 5;
 
     function GameManager(address gameTokenAddress) public {
-        currGameSession = 0;
         owner = msg.sender;
         gameToken = GameToken(gameTokenAddress);
         gameInProgress = false;
@@ -50,70 +38,60 @@ contract GameManager {
         callTheServer = false;
         numStateVerified = 0;
 
-        games[currGameSession] = GameSession({
-            numPlayers: 0
-        });
+        numPlayers = 0;
     }
 
     // before call the user has to approve the tokens to be spent
-    function joinGame(address user, uint numTokens) public {
+    function joinGame(address user, uint32 numTokens) public {
         require(numTokens > ONE_PLAY + FEE);
         require(gameInProgress == false);
 
+        gameBalances[numPlayers] = numTokens;
+        userPosition[numPlayers] = msg.sender;
+        numPlayers++;
+        
+        if (numPlayers >= MIN_PLAYERS) {
+            gameInProgress = true;
+        }
+        
         gameToken.transferFrom(user, this, numTokens);
-
-        games[currGameSession].gameBalances[user] = numTokens;
-        games[currGameSession].numPlayers++;
     }
 
-    // WHO CALLS this?
-    function startGame() public {
-        require(games[currGameSession].numPlayers >= MIN_PLAYERS);
-
-        gameInProgress = true;
-    }
-
-    // Called by each user who plays in the current game
-    // This is an approach where the users send a hash of the state,
-    // And after someone submits the acctuall state matching the hash this is to save money
-    // on TX, different approach is to thightly pack the state and save that way
-
-    //BUG: what is one user that is a player spams with his state (limit to 1 vote per user)
-    function gameEnds(bytes32 stateHash) public onlyCurrentPlayer {
+    //What happends if some of the players don't vote??
+    function gameEnds(uint32[] state, uint position) public {
+        require(userPosition[position] == msg.sender);
+        require(hasVoted[msg.sender] == false);
+        
+        bytes32 stateHash = keccak256(state);
+        
         if (currStateHash == 0x0) {
             currStateHash = stateHash;
-        } else {
-            if (currStateHash == stateHash) {
-                numStateVerified++;
+            return;
+        } 
+        
+        if (currStateHash == stateHash) {
+            
+            numStateVerified++;
+            hasVoted[msg.sender] = true;
 
-                // The last one
-                if( numStateVerified == games[currGameSession].numPlayers) {
-                    playersVoted = true;
-                }
-            } else {
-                // Bad stuff somone is cheating, server will punish the cheater and give the money to the poor
-                callTheServer = true;
+            // The last one
+            if (numStateVerified >= numPlayers) {
+                playersVoted = true;
+                submitState(state);
             }
+        } else {
+            // Bad stuff somone is cheating, server will punish the cheater and give the money to the poor
+            callTheServer = true;
         }
     }
 
-    // This is called by someone (server || some user) ?
-    // Only when the state if verified by everyone in gameEnds
-    // The user submits the state, probably better packed than this?
-    function submitState(address[] users, uint[] scores) public {
-        require(playersVoted == true && users.length == scores.length);
+
+    function submitState(uint32[] state) internal {
+        require(playersVoted == true);
         
-        GameState[] state;
-        
-        for (uint i = 0; i < users.length; ++i) {
-            balances[users[i]] += scores[i];
-            state[i] = GameState({
-               user: users[i],
-               score: scores[i]
-            });
+        for(uint i = 0; i < numPlayers; ++i) {
+            balances[userPosition[i]] += state[i];
         }
-        
-        // sha3(state);
 
         newGameSession();
     }
@@ -127,17 +105,18 @@ contract GameManager {
     function changeFee(uint newFee) public onlyOwner {
         FEE = newFee;
     }
+    
+    function changeMinPlayers(uint _MIN_PLAYERS) public onlyOwner {
+        MIN_PLAYERS = _MIN_PLAYERS;
+    }
 
     function newGameSession() internal {
-        currGameSession++;
         gameInProgress = false;
         playersVoted = false;
         callTheServer = false;
         numStateVerified = 0;
 
-        games[currGameSession] = GameSession({
-            numPlayers: 0
-        });
+        numPlayers = 0;
     }
     
 }
