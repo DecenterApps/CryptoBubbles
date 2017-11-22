@@ -20,7 +20,9 @@ class Lobby extends Component {
             gameTokenInstance: null,
             tokenBalance: 0,
             tokensSubmited: 0,
-            address: ""
+            address: "",
+            joinedUsers: [],
+            numPlayers: 0
         }
 
         this.joinGame = this.joinGame.bind(this);
@@ -39,6 +41,7 @@ class Lobby extends Component {
 
           await this.setupContracts();
           await this.getTokenBalance();
+          await this.getNumPlayers();
 
         });
     }
@@ -51,8 +54,8 @@ class Lobby extends Component {
         gameTokenContract.setProvider(this.state.web3.currentProvider);
 
         try {
-            const gameTokenInstance = await gameTokenContract.at("0x94bc1c5d29d0e084f9d711b230ab2f2aa201cc29");
-            const gameManagerInstance = await gameManagerContract.at("0x8b587afd2a01f4ce66b5920a5c0272f92285ca50");
+            const gameTokenInstance = await gameTokenContract.at("0xe004e3d3fe43582a85d2bf6471eb2a708316dabc");
+            const gameManagerInstance = await gameManagerContract.at("0xb6d1fd007c22d2a70e2a3dd3f8fb38945de6b61f");
                 
             this.setState({
                 gameTokenInstance,
@@ -65,26 +68,48 @@ class Lobby extends Component {
 
     async getTokenBalance() {
 
-        const res = await this.state.gameTokenInstance.balanceOf("0x93cdB0a93Fc36f6a53ED21eCf6305Ab80D06becA");
+        try {
+            const res = await this.state.gameTokenInstance.balanceOf(web3.eth.accounts[0]);
+            
+            this.setState({
+                tokenBalance: res.valueOf()
+            });
+        } catch(err) {
+            console.log(err);
+        }
+    }
 
+    async getNumPlayers() {
+        const res = await this.state.gameManagerInstance.currPlayerIndex();
+        
         this.setState({
-            tokenBalance: res.valueOf()
+            numPlayers: res.valueOf()
         });
     }
 
     async joinGame() {
+
         const numTokens = this.state.tokensSubmited;
         const managerInstance = this.state.gameManagerInstance;
 
-        console.log(web3.eth.accounts[0]);
+        try {
+            const res = await managerInstance.joinGame(web3.eth.accounts[0], numTokens, {from: web3.eth.accounts[0]});
 
-        const res = await managerInstance.joinGame(web3.eth.accounts[0], numTokens, {from: web3.eth.accounts[0]});
+            const event = res.logs[0];
 
-        console.log(res);
+            const newUser = {
+                address: event.args.user,
+                numTokens: event.args.numTokens.valueOf()
+            };
 
-        this.setState({
-            tokensSubmited: 0
-        });
+            this.setState({
+                tokensSubmited: 0,
+                joinedUsers: [...this.state.joinedUsers, newUser]
+            });
+
+        } catch(err) {
+            console.log('ERR', err);
+        }
     }
 
     onInputChange(event) {
@@ -102,9 +127,18 @@ class Lobby extends Component {
             <div className="main-form">
                 <div>Lobby of the game</div>
                 <h3>Token Balance: { this.state.tokenBalance }</h3>
+                <h4>{ this.state.numPlayers  } players have joined the game!</h4>
 
                 <input type="text" name="tokensSubmited" val={ this.state.tokensSubmited } onChange={ this.onInputChange }/>
                 <button onClick={ this.joinGame }>Join Game</button>
+
+                <ul>
+                    {
+                        this.state.joinedUsers.map(user => 
+                        <li>User joined</li>
+                        )
+                    }
+                </ul>
             </div>
         )
     }
