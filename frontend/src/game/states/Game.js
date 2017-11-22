@@ -2,6 +2,8 @@
 import Phaser from 'phaser'
 import Player from '../objects/Player'
 
+const io = require('socket.io-client');
+
 export default class extends Phaser.State {
 
   create () {
@@ -13,6 +15,9 @@ export default class extends Phaser.State {
     this.player.anchor.set(0.5);
     
     this.game.physics.arcade.enable(this.player);
+
+    this.socket = io('http://localhost:60000');
+
   }
 
   render () {

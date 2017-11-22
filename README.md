@@ -4,7 +4,7 @@
  - Server
  The server is written in Go and is using socket.io for communication with the frontend
  You can run the server by going to /server and running `go run server.go`
- Server listens on port 6000
+ Server listens on port 60000
 
  - Frontend
  The game is written in Phaser and opensource game engine.

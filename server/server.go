@@ -5,14 +5,21 @@ import (
 	"net/http"
 
 	"github.com/googollee/go-socket.io"
+	"github.com/rs/cors"
+	// "github.com/regcostajr/go-web3/providers"
+	// web3 "github.com/regcostajr/go-web3"
 )
 
 func main() {
 	server, err := socketio.NewServer(nil)
 
+	// web3Client := web3.NewWeb3(providers.NewHTTPProvider("http://kovan.decenter.com", 10))
+
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	mux := http.NewServeMux()
 
 	server.On("connection", func(sock socketio.Socket) {
 		log.Println("Socket connection")
@@ -26,9 +33,14 @@ func main() {
 		log.Println(err)
 	})
 
-	http.Handle("/socket.io/", server)
+	mux.Handle("/socket.io/", server)
 
-	log.Println("Listening at port 6000")
+	log.Println("Listening at port 60000")
 
-	log.Fatal(http.ListenAndServe(":6000", nil))
+	handler := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowCredentials: true,
+	}).Handler(mux)
+
+	log.Fatal(http.ListenAndServe(":60000", handler))
 }
