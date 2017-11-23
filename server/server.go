@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"encoding/json"
 
 	"github.com/googollee/go-socket.io"
 	"github.com/rs/cors"
@@ -11,8 +12,8 @@ import (
 )
 
 type Position struct {
-	x int
-	y int
+	x int `json:"x"`
+	y int `json:"y"`
 }
 
 func main() {
@@ -27,14 +28,23 @@ func main() {
 	mux := http.NewServeMux()
 
 	server.On("connection", func(sock socketio.Socket) {
-		log.Println("Socket connection")
+		log.Println("User connection")
+		
+		sock.On("join", func() {
+
+		})
 
 		sock.On("disconnection", func() {
 			log.Println("Socket disconnected")
 		})
 
-		sock.On("move", func(pos Position) {
-			log.Println("Move received");
+		sock.On("move", func(resp[] byte) {
+			var pos = new(Position)
+			err := json.Unmarshal(resp, &pos)
+
+			if(err != nil) {
+				log.Println(err)
+			}
 		})
 	})
 
