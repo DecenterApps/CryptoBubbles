@@ -2,8 +2,8 @@
 
 ## Development
  - Server
- The server is written in Go and is using socket.io for communication with the frontend
- You can run the server by going to /server and running `go run server.go`
+ The server is written in Node.js and is using socket.io for communication with the frontend
+ You can run the server by going to /server and running `npm start`
  Server listens on port 60000
 
  - Frontend

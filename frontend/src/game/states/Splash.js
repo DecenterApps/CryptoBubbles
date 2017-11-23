@@ -13,7 +13,8 @@ export default class extends Phaser.State {
     //
     // load your assets
     //
-    this.load.image('mushroom', 'assets/images/decenter-logo.png')
+    this.load.image('decenter', 'assets/images/decenter-logo.png');
+    this.load.image('background', 'assets/images/tile.jpeg');    
   }
 
   create () {

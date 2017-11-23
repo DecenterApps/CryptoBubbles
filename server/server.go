@@ -1,3 +1,5 @@
+// DEPRECATED: for the MVP the server is in Node.js we might move to Go later on
+
 package main
 
 import (
