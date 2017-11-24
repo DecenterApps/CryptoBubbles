@@ -132,5 +132,9 @@ contract GameManager {
     function resetGame() public onlyOwner {
         newGameSession();
     }
+
+    function startGame() public onlyOwner {
+        gameInProgress = true;
+    }
     
 }

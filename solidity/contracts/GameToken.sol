@@ -21,7 +21,7 @@ contract GameToken is StandardToken {
 
         uint numTokens = msg.value / TOKEN_IN_WEI;
 
-        balances[msg.sender] = numTokens;
+        balances[msg.sender] += numTokens;
     }
 
     function withdrawEther(uint tokenAmount) public {

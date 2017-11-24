@@ -6,41 +6,61 @@ const PORT = process.env.PORT || 60000;
 
 const currPlayers = {};
 const dots = {};
+const lobby = [];
 
 const GAME_WIDTH = 2000;
 const GAME_HEIGHT = 2000;
 
-//SHOULD BE CALLED only once when game starts
-generateDots();
+let gameStarted = false;
+
 
 io.on('connection', (socket) => {
     console.log('a user connected');
 
-    socket.on('join-game', (pos, address) => {
-        socket.emit('load-players', currPlayers);
-        socket.emit('load-dots', dots);
+    socket.on('start-game', () => {
+        io.sockets.emit('game-started');
+        gameStarted = true;
 
-        currPlayers[address] = pos; 
-        
-        //Does this emit to the calling socket?
-        socket.broadcast.emit('player-added', pos, address);
+        //SHOULD BE CALLED only once when game starts
+        generateDots();
     });
 
-    socket.on('move', (pos, address) => {
-        socket.broadcast.emit('player-move', pos, address);
+    socket.on('get-users', () => {
+        socket.emit('load-users', lobby);
     });
 
-      //when the player has eaten the dot
-    socket.on('dot-eaten', (pos) => {
-        if(pos.x && pos.y) {
-            socket.broadcast.emit('remove-dot', pos)
-            delete dots[pos.x + " " + pos.y];
-        }
+    socket.on('user-joined', (user) => {
+        lobby.push(user);
+        socket.broadcast.emit('add-user');
     });
 
-    socket.on('disconnection', () => {
-        console.log('disconnect');
-    });
+    if (gameStarted) {
+        socket.on('join-game', (pos, address) => {
+            socket.emit('load-players', currPlayers);
+            socket.emit('load-dots', dots);
+    
+            currPlayers[address] = pos; 
+            
+            //Does this emit to the calling socket?
+            socket.broadcast.emit('player-added', pos, address);
+        });
+    
+        socket.on('move', (pos, address) => {
+            socket.broadcast.emit('player-move', pos, address);
+        });
+    
+        //when the player has eaten the dot
+        socket.on('dot-eaten', (pos) => {
+            if(pos.x && pos.y) {
+                socket.broadcast.emit('remove-dot', pos)
+                delete dots[pos.x + " " + pos.y];
+            }
+        });
+    
+        socket.on('disconnection', () => {
+            console.log('disconnect');
+        });
+    }
 
   });
   

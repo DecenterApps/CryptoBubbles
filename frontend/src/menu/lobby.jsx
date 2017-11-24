@@ -9,6 +9,8 @@ import web3Helper from './web3Helper';
 import gameManager from '../../../solidity/build/contracts/GameManager.json';
 import gameToken from '../../../solidity/build/contracts/GameToken.json';
 
+import io from 'socket.io-client';
+
 class Lobby extends Component {
 
     constructor(props) {
@@ -20,13 +22,39 @@ class Lobby extends Component {
             gameTokenInstance: null,
             tokenBalance: 0,
             tokensSubmited: 0,
+            etherSent: 0,
             address: "",
             joinedUsers: [],
-            numPlayers: 0
+            numPlayers: 0,
+            isAdmin: false
         }
 
         this.joinGame = this.joinGame.bind(this);
+        this.buyTokens = this.buyTokens.bind(this);
         this.onInputChange = this.onInputChange.bind(this);
+        this.approve = this.approve.bind(this);
+        this.manualStart = this.manualStart.bind(this);
+        this.resetGame = this.resetGame.bind(this);
+
+        this.socket = io('http://localhost:60000');
+
+        this.socket.on('game-started', () => {
+            window.location.href = 'game.html';
+        });
+
+        this.socket.emit('get-users');
+
+        this.socket.on('load-users', (users) => {
+            this.setState({
+                joinedUsers: users
+            });
+        });
+
+        this.socket.on('add-user', (user) => {
+            this.setState({
+                joinedUsers: [...joinedUsers, user]
+            });
+        });
     }
 
     async componentWillMount() {
@@ -37,7 +65,9 @@ class Lobby extends Component {
               web3,
           });
 
-
+          this.setState({
+              isAdmin: web3.eth.accounts[0] === "0x93cdb0a93fc36f6a53ed21ecf6305ab80d06beca"
+          })
 
           await this.setupContracts();
           await this.getTokenBalance();
@@ -54,8 +84,8 @@ class Lobby extends Component {
         gameTokenContract.setProvider(this.state.web3.currentProvider);
 
         try {
-            const gameTokenInstance = await gameTokenContract.at("0xe004e3d3fe43582a85d2bf6471eb2a708316dabc");
-            const gameManagerInstance = await gameManagerContract.at("0xb6d1fd007c22d2a70e2a3dd3f8fb38945de6b61f");
+            const gameTokenInstance = await gameTokenContract.at("0x8e15bbe2f7b10408e4e10889c6b8ddc540ff2244");
+            const gameManagerInstance = await gameManagerContract.at("0x3da2ce9724a918029ce1b8281274ec110277c4ff");
                 
             this.setState({
                 gameTokenInstance,
@@ -87,6 +117,60 @@ class Lobby extends Component {
         });
     }
 
+    async buyTokens() {
+        try {
+
+            const etherSent = this.state.etherSent;
+
+            this.setState({
+                etherSent: 0 
+             });
+
+            const res = await this.state.gameTokenInstance
+                        .buyTokens({from: web3.eth.accounts[0], value: web3.toWei(etherSent)});
+
+            await this.getTokenBalance();
+
+        } catch(err) {
+            console.log(err);
+        }
+    }
+
+    async approve() {
+        try {
+
+            await this.state.gameTokenInstance
+                .approve("0x3da2ce9724a918029ce1b8281274ec110277c4ff",
+                 this.state.tokenBalance, {from: web3.eth.accounts[0]});
+
+        } catch(err) {
+            console.log(err);
+        }
+    }
+
+    async manualStart() {
+        try {
+             await this.state.gameManagerInstance.startGame({from: web3.eth.accounts[0]});
+
+            this.socket.emit('start-game');
+
+        } catch(err) {
+            console.log(err);
+        }
+    }
+
+    async resetGame() {
+        try {
+
+            await this.state.gameManagerInstance.resetGame({from: web3.eth.accounts[0]});
+
+            console.log("reset");
+
+        } catch(err) {
+            console.log(err);
+        }
+    }
+
     async joinGame() {
 
         const numTokens = this.state.tokensSubmited;
@@ -101,6 +185,8 @@ class Lobby extends Component {
                 address: event.args.user,
                 numTokens: event.args.numTokens.valueOf()
             };
+
+            this.socket.emit('user-joined', newUser);
 
             this.setState({
                 tokensSubmited: 0,
@@ -129,16 +215,39 @@ class Lobby extends Component {
                 <h3>Token Balance: { this.state.tokenBalance }</h3>
                 <h4>{ this.state.numPlayers  } players have joined the game!</h4>
 
-                <input type="text" name="tokensSubmited" val={ this.state.tokensSubmited } onChange={ this.onInputChange }/>
+                <input type="text" placeholder="Num of tokens" name="tokensSubmited" val={ this.state.tokensSubmited } onChange={ this.onInputChange }/>
                 <button onClick={ this.joinGame }>Join Game</button>
 
                 <ul>
                     {
                         this.state.joinedUsers.map(user => 
-                        <li>User joined</li>
+                        <li>{ user.address.substring(0, 12) }... : { user.numTokens } Tokens</li>
                         )
                     }
                 </ul>
+
+                <hr />
+
+                <div>
+                    <input type="text" placeholder="Num of ethers" name="etherSent" val={ this.state.etherSent } onChange={ this.onInputChange }/>
+                    <button onClick={ this.buyTokens }>Buy Tokens</button>
+
+                    <div>
+                        <button onClick={ this.approve }>Approve</button>
+                    </div>
+
+                    <div>
+                        { this.state.isAdmin &&
+                            <button onClick={ this.manualStart }>Start Game</button>
+                        }
+                    </div>
+
+                    <div>
+                        { this.state.isAdmin &&
+                            <button onClick={ this.resetGame }>Reset Game</button>
+                        }
+                    </div>
+                </div>
             </div>
         )
     }
