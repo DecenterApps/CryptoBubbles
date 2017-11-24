@@ -13,6 +13,7 @@ export default class extends Phaser.State {
   create () {
 
     this.players = {};
+    this.dots = {};
 
     this.web3 = new Web3(window.web3.currentProvider);
 
@@ -22,13 +23,13 @@ export default class extends Phaser.State {
       this.playerAddr = Math.random().toString(36).substr(2, 10);
     }
 
-    console.log(this.playerAddr);
-
     game.physics.startSystem(Phaser.Physics.ARCADE);    
     
     game.world.setBounds(0, 0, 2000, 2000);
 
     game.add.tileSprite(0, 0, game.world.width, game.world.height, 'background');
+
+    this.dotGroup = this.game.add.group();
 
     this.player = game.add.sprite(500, 500, 'decenter');
     this.player.anchor.set(0.5);
@@ -49,10 +50,15 @@ export default class extends Phaser.State {
           this.addPlayer(players[address], address);
         }
       }
-    })
+    });
+
+    this.socket.on('load-dots', (dots) => {
+      for (const key of Object.keys(dots)) {
+        this.addDot(dots[key]);
+      }
+    });
 
     this.socket.on('player-move', (pos, address) => {
-      console.log('player move', pos, address)
       if(this.players[address]) {
         this.players[address].x = pos.x;
         this.players[address].y = pos.y;
@@ -61,6 +67,14 @@ export default class extends Phaser.State {
 
     this.socket.on('player-added', (pos, address) => {
       this.addPlayer(pos, address);
+    });
+
+    this.socket.on('add-dot', (pos) => {
+      this.addDot(pos);
+    });
+
+    this.socket.on('remove-dot', (pos) => {
+      this.dots[pos.x + " " + pos.y].kill();
     });
 
   }
@@ -72,21 +86,36 @@ export default class extends Phaser.State {
     this.game.physics.arcade.enable(this.players[address]);  
   }
 
+  followMouse() {
+    if (this.game.physics.arcade.distanceToPointer(this.player, this.game.input.activePointer) > 8) {
+        this.game.physics.arcade.moveToPointer(this.player, 300);
+    } else {
+        this.player.body.velocity.set(0);
+    }
+  }
+
+  addDot(pos) {
+    const dot = this.game.add.sprite(pos.x, pos.y, 'dot');
+    this.game.physics.arcade.enable(dot);  
+    this.dotGroup.add(dot);
+    this.dots[pos.x + " " + pos.y] = dot;
+
+  }
+
+  dotEaten(player, dot) {
+    this.socket.emit('dot-eaten', dot.position);
+    dot.kill();
+  }
+
   render() {
     game.debug.cameraInfo(game.camera, 32, 32);
   }
 
   update() {
-
     this.socket.emit('move', this.player.position, this.playerAddr);
 
-    if (this.game.physics.arcade.distanceToPointer(this.player, this.game.input.activePointer) > 8)
-    {
-        this.game.physics.arcade.moveToPointer(this.player, 300);
-    }
-    else
-    {
-        this.player.body.velocity.set(0);
-    }
+    this.game.physics.arcade.overlap(this.player, this.dotGroup, this.dotEaten, null, this);
+
+    this.followMouse();
   }
 }

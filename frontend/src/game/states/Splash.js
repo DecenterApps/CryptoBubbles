@@ -15,6 +15,7 @@ export default class extends Phaser.State {
     //
     this.load.image('decenter', 'assets/images/decenter-logo.png');
     this.load.image('background', 'assets/images/tile.jpeg');    
+    this.load.image('dot', 'assets/images/dot.png');   
   }
 
   create () {
