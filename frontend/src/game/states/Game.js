@@ -14,6 +14,7 @@ export default class extends Phaser.State {
 
     this.players = {};
     this.dots = {};
+    this.scoreboard = {};
 
     this.web3 = new Web3(window.web3.currentProvider);
 
@@ -28,6 +29,9 @@ export default class extends Phaser.State {
     game.world.setBounds(0, 0, 2000, 2000);
 
     game.add.tileSprite(0, 0, game.world.width, game.world.height, 'background');
+
+    this.scoreText = game.add.text(window.innerWidth - 200, 50, "Score: 0");
+    this.scoreText.fixedToCamera = true;
 
     this.dotGroup = this.game.add.group();
 
@@ -73,7 +77,9 @@ export default class extends Phaser.State {
       this.addDot(pos);
     });
 
-    this.socket.on('remove-dot', (pos) => {
+    this.socket.on('remove-dot', (pos, address) => {
+      this.addToScore(address, 1);
+      this.growPlayer(address);
       this.dots[pos.x + " " + pos.y].kill();
     });
 
@@ -103,8 +109,32 @@ export default class extends Phaser.State {
   }
 
   dotEaten(player, dot) {
-    this.socket.emit('dot-eaten', dot.position);
+    this.socket.emit('dot-eaten', dot.position, this.playerAddr);
     dot.kill();
+    this.addToScore(this.playerAddr, 1);
+
+    const currScore = this.scoreboard[this.playerAddr];
+    player.scale.set(1 + currScore/100, 1 + currScore/100);
+    this.updateScoreText(currScore);
+  }
+
+  growPlayer(address) {
+    const currScore = this.scoreboard[address];
+    this.players[address].scale.set(1 + currScore/100, 1 + currScore/100);
+  }
+
+  addToScore(address, points) {
+    if(!this.scoreboard[address]) {
+      this.scoreboard[address] = points;
+      // this.updateScoreText(points);
+    } else {
+      this.scoreboard[address] += points;
+      // this.updateScoreText(this.scoreboard[address]);
+    }
+  }
+
+  updateScoreText(score) {
+    this.scoreText.setText("Score: " + score);
   }
 
   render() {
