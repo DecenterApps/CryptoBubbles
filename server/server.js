@@ -17,6 +17,7 @@ const GAME_HEIGHT = 2000;
 let gameStarted = false;
 let gameInProgress = false;
 
+const GAME_TIME = 1000 * 60 * 1; //1 minute
 
 io.on('connection', async (socket) => {
     console.log('a user connected');
@@ -29,6 +30,14 @@ io.on('connection', async (socket) => {
             io.sockets.emit('game-started');
             gameStarted = true;
             gameInProgress = true;
+
+            setTimeout(() => {
+                
+                io.sockets.emit('game-ended');
+                // gameStarted = false;
+                // gameInProgress = false;
+
+            }, GAME_TIME)
     
             generateDots();
         }
@@ -58,6 +67,16 @@ io.on('connection', async (socket) => {
             socket.broadcast.emit('player-move', pos, address);
         });
     
+        socket.on('player-eaten', (addressLoser, addressWinner) => {
+            socket.broadcast.emit('player-dead', addressLoser, addressWinner);
+
+            // Update player list and scoreboard
+            // TODO: add an alive field
+            currPlayers[addressLoser] = {};
+            scoreboard[addressWinner] += scoreboard[addressLoser];
+            scoreboard[addressLoser] = 0; 
+        });
+
         //when the player has eaten the dot
         socket.on('dot-eaten', (pos, address) => {
             if(pos.x && pos.y) {
@@ -65,7 +84,7 @@ io.on('connection', async (socket) => {
                 delete dots[pos.x + " " + pos.y];
 
                 addPoints(address, 1);
-            }
+            } 
         });
     
         socket.on('disconnection', () => {

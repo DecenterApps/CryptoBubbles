@@ -11,6 +11,9 @@ import gameToken from '../../../solidity/build/contracts/GameToken.json';
 
 import io from 'socket.io-client';
 
+const NUM_WEI_PER_TOKEN = 10000000000000;
+const MIN_TOKENS = 1200;
+
 class Lobby extends Component {
 
     constructor(props) {
@@ -21,8 +24,8 @@ class Lobby extends Component {
             gameManagerInstance: null,
             gameTokenInstance: null,
             tokenBalance: 0,
-            tokensSubmited: 0,
-            etherSent: 0,
+            tokensSubmited: '',
+            tokensToBuy: '',
             address: "",
             joinedUsers: [],
             numPlayers: 0,
@@ -32,7 +35,6 @@ class Lobby extends Component {
         this.joinGame = this.joinGame.bind(this);
         this.buyTokens = this.buyTokens.bind(this);
         this.onInputChange = this.onInputChange.bind(this);
-        this.approve = this.approve.bind(this);
         this.manualStart = this.manualStart.bind(this);
         this.resetGame = this.resetGame.bind(this);
 
@@ -84,7 +86,7 @@ class Lobby extends Component {
         gameTokenContract.setProvider(this.state.web3.currentProvider);
 
         try {
-            const gameTokenInstance = await gameTokenContract.at("0x8e15bbe2f7b10408e4e10889c6b8ddc540ff2244");
+            const gameTokenInstance = await gameTokenContract.at("0x237f0b439693b565115f0ff62df7fce23f81d1a5");
             const gameManagerInstance = await gameManagerContract.at("0x3da2ce9724a918029ce1b8281274ec110277c4ff");
                 
             this.setState({
@@ -120,28 +122,18 @@ class Lobby extends Component {
     async buyTokens() {
         try {
 
-            const etherSent = this.state.etherSent;
+            const tokensToBuy = this.state.tokensToBuy;
 
-            this.setState({
-                etherSent: 0 
-             });
+            const ethPrice = tokensToBuy * NUM_WEI_PER_TOKEN;
 
             const res = await this.state.gameTokenInstance
-                        .buyTokens({from: web3.eth.accounts[0], value: web3.toWei(etherSent)});
+                        .buyAndApprove("0x3da2ce9724a918029ce1b8281274ec110277c4ff", {from: web3.eth.accounts[0], value: ethPrice});
+
+            this.setState({
+                tokensToBuy: ''
+            });
 
             await this.getTokenBalance();
-
-        } catch(err) {
-            console.log(err);
-        }
-    }
-
-    async approve() {
-        try {
-
-            await this.state.gameTokenInstance
-                .approve("0x3da2ce9724a918029ce1b8281274ec110277c4ff",
-                 this.state.tokenBalance, {from: web3.eth.accounts[0]});
 
         } catch(err) {
             console.log(err);
@@ -176,6 +168,10 @@ class Lobby extends Component {
         const numTokens = this.state.tokensSubmited;
         const managerInstance = this.state.gameManagerInstance;
 
+        if (numTokens < MIN_TOKENS) {
+            console.log("Need more tokens");
+        }
+
         try {
             const res = await managerInstance.joinGame(web3.eth.accounts[0], numTokens, {from: web3.eth.accounts[0]});
 
@@ -190,7 +186,8 @@ class Lobby extends Component {
 
             this.setState({
                 tokensSubmited: 0,
-                joinedUsers: [...this.state.joinedUsers, newUser]
+                joinedUsers: [...this.state.joinedUsers, newUser],
+                numPlayers: ++this.state.numPlayers
             });
 
         } catch(err) {
@@ -215,7 +212,7 @@ class Lobby extends Component {
                 <h3>Token Balance: { this.state.tokenBalance }</h3>
                 <h4>{ this.state.numPlayers  } players have joined the game!</h4>
 
-                <input type="text" placeholder="Num of tokens" name="tokensSubmited" val={ this.state.tokensSubmited } onChange={ this.onInputChange }/>
+                <input type="text" placeholder="Num of tokens" name="tokensSubmited" value={ this.state.tokensSubmited } onChange={ this.onInputChange }/>
                 <button onClick={ this.joinGame }>Join Game</button>
 
                 <ul>
@@ -229,11 +226,12 @@ class Lobby extends Component {
                 <hr />
 
                 <div>
-                    <input type="text" placeholder="Num of ethers" name="etherSent" val={ this.state.etherSent } onChange={ this.onInputChange }/>
+                    <input type="text" placeholder="Num of tokens to buy" name="tokensToBuy" value={ this.state.tokensToBuy } onChange={ this.onInputChange }/>
                     <button onClick={ this.buyTokens }>Buy Tokens</button>
 
                     <div>
-                        <button onClick={ this.approve }>Approve</button>
+                        In order to play the game you need to stake at least { MIN_TOKENS } Tokens by clicking join.
+                        When enough players join the game will start
                     </div>
 
                     <div>

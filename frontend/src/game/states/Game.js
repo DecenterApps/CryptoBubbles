@@ -7,6 +7,8 @@ import Web3 from 'web3';
 const io = require('socket.io-client');
 
 const TESTING = true;
+let gameTime = 60; //1 min
+let playersSpeed = 300;
 
 export default class extends Phaser.State {
 
@@ -28,18 +30,25 @@ export default class extends Phaser.State {
     
     game.world.setBounds(0, 0, 2000, 2000);
 
+    this.game.physics.startSystem(Phaser.Physics.ARCADE);  
+
     game.add.tileSprite(0, 0, game.world.width, game.world.height, 'background');
 
     this.scoreText = game.add.text(window.innerWidth - 200, 50, "Score: 0");
     this.scoreText.fixedToCamera = true;
 
+    this.timerText = game.add.text(30, 50, "Time left: 60");
+    this.timerText.fixedToCamera = true;
+
     this.dotGroup = this.game.add.group();
+    this.playersGroup = this.game.add.group();
 
     this.player = game.add.sprite(500, 500, 'decenter');
-    this.player.anchor.set(0.5);
     
-    this.game.physics.startSystem(Phaser.Physics.ARCADE);  
     this.game.physics.arcade.enable(this.player);  
+
+    this.player.body.setCircle(32);
+    this.player.body.mass = 10;
     
     // game.camera.deadzone = new Phaser.Rectangle(100, 100, 800, 800);
     game.camera.follow(this.player);
@@ -83,18 +92,57 @@ export default class extends Phaser.State {
       this.dots[pos.x + " " + pos.y].kill();
     });
 
+    this.socket.on('player-dead', (addressLoser, addressWinner) =>  {
+      if (this.playerAddr === addressLoser) {
+        this.state.start('Dead');
+      } else {
+        this.players[addressLoser].kill();
+
+        this.scoreboard[this.playerAddr] += this.scoreboard[addressLoser];
+        this.scoreboard[addressLoser] = 0;
+        this.players[addressWinner].body.mass += this.players[addressLoser].body.mass;
+ 
+      }
+    });
+
+    this.socket.on('game-ended', () => {
+      
+      this.state.start('GameFinished');
+    });
+
+    this.createTimer();
+
+  }
+
+  createTimer() {
+    const secondsInterval = setInterval(() => {
+      --gameTime;
+
+      if (gameTime <= 0) {
+        this.timerText.setText("Game has ended");
+        clearInterval(secondsInterval);
+      } else {
+        this.timerText.setText("Time left: " + gameTime);
+      }
+    }, 1000);
+
   }
 
   addPlayer(pos, address) {
-    this.players[address] = this.game.add.sprite( 200, 200, 'decenter');;
+    const currPlayer = this.game.add.sprite( 200, 200, 'decenter');
     
-    this.players[address].anchor.set(0.5);
-    this.game.physics.arcade.enable(this.players[address]);  
+    this.game.physics.arcade.enable(currPlayer);
+    currPlayer.body.setCircle(22);
+    this.playersGroup.add(currPlayer);
+
+    currPlayer.address = address;
+
+    this.players[address] = currPlayer;
   }
 
   followMouse() {
     if (this.game.physics.arcade.distanceToPointer(this.player, this.game.input.activePointer) > 8) {
-        this.game.physics.arcade.moveToPointer(this.player, 300);
+        this.game.physics.arcade.moveToPointer(this.player, playersSpeed);
     } else {
         this.player.body.velocity.set(0);
     }
@@ -103,6 +151,7 @@ export default class extends Phaser.State {
   addDot(pos) {
     const dot = this.game.add.sprite(pos.x, pos.y, 'dot');
     this.game.physics.arcade.enable(dot);  
+    dot.body.setCircle(5);
     this.dotGroup.add(dot);
     this.dots[pos.x + " " + pos.y] = dot;
 
@@ -115,12 +164,35 @@ export default class extends Phaser.State {
 
     const currScore = this.scoreboard[this.playerAddr];
     player.scale.set(1 + currScore/100, 1 + currScore/100);
+    player.body.mass += 1;
+
+    if (playersSpeed > 30) {
+      playersSpeed -= 1;
+    }
+  
     this.updateScoreText(currScore);
+  }
+
+  playerEaten(player1, player2) {
+     if (player1.body.mass > player2.body.mass) {
+       const addr = player2.address;
+
+       // update the score and the mass
+       this.scoreboard[this.playerAddr] += this.scoreboard[addr];
+       this.scoreboard[addr] = 0;
+       player1.body.mass += player2.body.mass;
+       playersSpeed -= 20;
+
+       player2.kill();
+
+       this.socket.emit('player-eaten', addr, this.playerAddr);
+     }
   }
 
   growPlayer(address) {
     const currScore = this.scoreboard[address];
     this.players[address].scale.set(1 + currScore/100, 1 + currScore/100);
+    this.players[address].body.mass += 1;
   }
 
   addToScore(address, points) {
@@ -138,13 +210,15 @@ export default class extends Phaser.State {
   }
 
   render() {
-    game.debug.cameraInfo(game.camera, 32, 32);
+    // game.debug.cameraInfo(game.camera, 32, 32);
   }
 
   update() {
     this.socket.emit('move', this.player.position, this.playerAddr);
 
     this.game.physics.arcade.overlap(this.player, this.dotGroup, this.dotEaten, null, this);
+
+    this.game.physics.arcade.overlap(this.player, this.playersGroup, this.playerEaten, null, this);
 
     this.followMouse();
   }
