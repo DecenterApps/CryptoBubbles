@@ -2,7 +2,8 @@
 import Phaser from 'phaser';
 import Player from '../objects/Player';
 
-import Web3 from 'web3';
+import web3Helper from '../helpers/web3Helper';
+import scoreboard from '../helpers/scoreboard';
 
 const io = require('socket.io-client');
 
@@ -16,11 +17,8 @@ export default class extends Phaser.State {
 
     this.players = {};
     this.dots = {};
-    this.scoreboard = {};
 
-    this.web3 = new Web3(window.web3.currentProvider);
-
-    this.playerAddr = web3.eth.accounts[0];
+    this.playerAddr = web3Helper.getUserAccount();
 
     if (TESTING) {
       this.playerAddr = Math.random().toString(36).substr(2, 10);
@@ -30,7 +28,7 @@ export default class extends Phaser.State {
     
     game.world.setBounds(0, 0, 2000, 2000);
 
-    this.game.physics.startSystem(Phaser.Physics.ARCADE);  
+    this.game.physics.startSystem(Phaser.Physics.ARCADE);
 
     game.add.tileSprite(0, 0, game.world.width, game.world.height, 'background');
 
@@ -98,15 +96,17 @@ export default class extends Phaser.State {
       } else {
         this.players[addressLoser].kill();
 
-        this.scoreboard[this.playerAddr] += this.scoreboard[addressLoser];
-        this.scoreboard[addressLoser] = 0;
+        const loserScore = scoreboard.getScore(addressLoser);
+        scoreboard.updateScore(addressWinner, loserScore);
+        scoreboard.setScore(addressLoser, 0);
+   
         this.players[addressWinner].body.mass += this.players[addressLoser].body.mass;
  
       }
     });
 
     this.socket.on('game-ended', () => {
-      
+
       this.state.start('GameFinished');
     });
 
@@ -162,7 +162,7 @@ export default class extends Phaser.State {
     dot.kill();
     this.addToScore(this.playerAddr, 1);
 
-    const currScore = this.scoreboard[this.playerAddr];
+    const currScore = scoreboard.getScore(this.playerAddr);
     player.scale.set(1 + currScore/100, 1 + currScore/100);
     player.body.mass += 1;
 
@@ -178,8 +178,11 @@ export default class extends Phaser.State {
        const addr = player2.address;
 
        // update the score and the mass
-       this.scoreboard[this.playerAddr] += this.scoreboard[addr];
-       this.scoreboard[addr] = 0;
+       const loserScore = scoreboard.getScore(adddr);
+
+       scoreboard.updateScore(this.playerAddr, loserScore);
+       scoreboard.setScore(addr, 0);
+
        player1.body.mass += player2.body.mass;
        playersSpeed -= 20;
 
@@ -190,18 +193,16 @@ export default class extends Phaser.State {
   }
 
   growPlayer(address) {
-    const currScore = this.scoreboard[address];
+    const currScore = scoreboard.getScore(address);
     this.players[address].scale.set(1 + currScore/100, 1 + currScore/100);
     this.players[address].body.mass += 1;
   }
 
   addToScore(address, points) {
-    if(!this.scoreboard[address]) {
-      this.scoreboard[address] = points;
-      // this.updateScoreText(points);
+    if(scoreboard.getScore(address) === 0) {
+      scoreboard.setScore(address, points);
     } else {
-      this.scoreboard[address] += points;
-      // this.updateScoreText(this.scoreboard[address]);
+      scoreboard.updateScore(address, points);
     }
   }
 
