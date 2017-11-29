@@ -84,6 +84,8 @@ io.on('connection', async (socket) => {
                 delete dots[pos.x + " " + pos.y];
 
                 addPoints(address, 1);
+
+                io.sockets.emit('add-dot', createDot());
             } 
         });
     
@@ -120,6 +122,17 @@ function generateDots() {
         dots[pos.x + " " + pos.y] = pos;
 
     }
+}
+
+function createDot() {
+    const pos = {
+        x: randomIntFromInterval(1, GAME_WIDTH),
+        y: randomIntFromInterval(1, GAME_HEIGHT)
+    };
+
+    dots[pos.x + " " + pos.y] = pos;
+
+    return pos;
 }
  
 

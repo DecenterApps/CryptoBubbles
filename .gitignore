@@ -4,3 +4,4 @@ frontend/dist
 server/node_modules
 node_modules
 .DS_STORE
+.idea

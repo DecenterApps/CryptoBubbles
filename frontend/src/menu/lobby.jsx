@@ -29,7 +29,8 @@ class Lobby extends Component {
             address: "",
             joinedUsers: [],
             numPlayers: 0,
-            isAdmin: false
+            isAdmin: false,
+            playersName: ''
         }
 
         this.joinGame = this.joinGame.bind(this);
@@ -213,6 +214,7 @@ class Lobby extends Component {
                 <h4>{ this.state.numPlayers  } players have joined the game!</h4>
 
                 <input type="text" placeholder="Num of tokens" name="tokensSubmited" value={ this.state.tokensSubmited } onChange={ this.onInputChange }/>
+                <input type="text" placeholder="Players name" name="playersName" value={ this.state.playersName } onChange={ this.onInputChange }/>
                 <button onClick={ this.joinGame }>Join Game</button>
 
                 <ul>

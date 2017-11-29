@@ -178,7 +178,7 @@ export default class extends Phaser.State {
        const addr = player2.address;
 
        // update the score and the mass
-       const loserScore = scoreboard.getScore(adddr);
+       const loserScore = scoreboard.getScore(addr);
 
        scoreboard.updateScore(this.playerAddr, loserScore);
        scoreboard.setScore(addr, 0);

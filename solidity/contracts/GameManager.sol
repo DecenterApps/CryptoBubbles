@@ -14,6 +14,7 @@ contract GameManager {
     uint32[] gameBalances;
     uint public currPlayerIndex;
     mapping (uint => address) userPosition;
+    mapping (address => bool) usersInGame;
 
     mapping (address => uint) public balances;
     
@@ -31,6 +32,7 @@ contract GameManager {
     uint ONE_PLAY = 1000;
     uint FEE = 200;
     uint MIN_PLAYERS = 5;
+    uint MAX_PLAYERS = 25;
 
     function GameManager(address gameTokenAddress) public {
         owner = msg.sender;
@@ -43,27 +45,54 @@ contract GameManager {
         currPlayerIndex = 0;
     }
 
-    //BUG: the same address should not be able to enter twice (in curr game)
-    // before call the user has to approve the tokens to be spent
-    function joinGame(address user, uint32 numTokens) public {
+    // Notice: for this call to execute we must first call .approve() 
+    // in gameToken contract, so that our contract can spend it
+    // CAP the num of players
+    function joinGame(uint32 numTokens) public {
+        // A user must submit some fixed num. of tokens to join the game
         require(numTokens > (ONE_PLAY + FEE));
+
+        // A user can't enter a game while the game is ongoing
         require(gameInProgress == false);
 
+        // A user can't enter a game twice with the same address
+        require(usersInGame[msg.sender] == false);
+
+        // We can't have more than 25 players?
+        require(currPlayerIndex <= 25);
+
+        // Transfer the tokens to the address of this contract
+        gameToken.transferFrom(msg.sender, this, numTokens);
+
+        // we stake the players tokens, and save it in an array
         gameBalances.push(numTokens);
+
+        // remember which position in the array did the player get
         userPosition[currPlayerIndex] = msg.sender;
+
+        // remember that the player has joined the current game
+        usersInGame[msg.sender] = true;
+
+        // Update the current position in the array
         currPlayerIndex++;
         
+        // trigger game start if we reached the required num. of players
         if (currPlayerIndex >= MIN_PLAYERS) {
             gameInProgress = true;
         }
         
-        gameToken.transferFrom(user, this, numTokens);
         GameJoined(msg.sender, numTokens, currPlayerIndex);
     }
 
-    //What happends if some of the players don't vote??
+    // What happens if some of the players don't vote??
     function gameEnds(uint32[] state, uint position) public {
+        // The msg.sender is sending us the position where he is
         require(userPosition[position] == msg.sender);
+
+        // The persone who votes, must be one of the players
+        require(usersInGame[msg.sender] == true);
+
+        // A player can vote only once
         require(hasVoted[msg.sender] == false);
         
         bytes32 stateHash = keccak256(state);
