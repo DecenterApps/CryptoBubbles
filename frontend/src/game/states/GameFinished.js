@@ -12,7 +12,7 @@ export default class extends Phaser.State {
     
     const headings = [ 'Name', 'Score' ];
 
-    const header = game.add.text((game.world.width / 2) - 200, (game.world.height / 2) - 200, '', style);
+    const header = game.add.text((window.innerWidth/ 2) - 200, (game.world.height / 2) - 200, '', style);
     header.parseList(headings);
 
     const score = [
@@ -22,12 +22,12 @@ export default class extends Phaser.State {
         [ 'Sabre', '1d6'],
     ];
 
-    var text = game.add.text((game.world.width / 2) - 200, (game.world.height / 2) - 150, '', style);
+    var text = game.add.text((window.innerWidth / 2) - 200, (game.world.height / 2) - 150, '', style);
     text.parseList(score);
 
     game.add.button(200, 200);
 
-    this.submitStateBtn = game.add.button(game.world.centerX - 130, 400, 'button', this.submitState, this, 2, 1, 0);
+    this.submitStateBtn = game.add.button(window.innerWidth- 130, 400, 'button', this.submitState, this, 2, 1, 0);
 
   }
 

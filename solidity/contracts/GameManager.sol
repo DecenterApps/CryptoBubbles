@@ -11,7 +11,7 @@ contract GameManager {
     
     event GameJoined(address indexed user, uint numTokens, uint playerPos);
 
-    uint32[] gameBalances;
+    uint32[] gameBalances; //TODO: take care of overflows
     uint public currPlayerIndex;
     mapping (uint => address) userPosition;
     mapping (address => bool) usersInGame;
@@ -28,31 +28,54 @@ contract GameManager {
     bool public gameInProgress;
     bool public callTheServer;
     bool public playersVoted;
+    
+    uint tokensGiven;
+    uint creationTime;
 
-    uint ONE_PLAY = 1000;
+    uint32 ONE_PLAY = 1000;
     uint FEE = 200;
     uint MIN_PLAYERS = 5;
     uint MAX_PLAYERS = 25;
 
-    function GameManager(address gameTokenAddress) public {
+    function GameManager() public {
         owner = msg.sender;
-        gameToken = GameToken(gameTokenAddress);
         gameInProgress = false;
         playersVoted = false;
         callTheServer = false;
         numStateVerified = 0;
+        tokensGiven = 0;
+        creationTime = now;
 
         currPlayerIndex = 0;
+    }
+    
+    // We want to reward the initial supporters of the game
+    // There will be an initial token amount that is given
+    // Token fee to play the game is paid by the contract
+    // This can only be called 3 weeks after the contract creating
+    // And if less than a million tokens have been given away
+    function joinGameFree() public {
+        require(tokensGiven < 1000000 && now < (creationTime + 3 weeks));
+        
+        enterGame(ONE_PLAY);
+        
+        tokensGiven += ONE_PLAY;
     }
 
     // Notice: for this call to execute we must first call .approve() 
     // in gameToken contract, so that our contract can spend it
-    // CAP the num of players
     function joinGame(uint32 numTokens) public {
         // A user must submit some fixed num. of tokens to join the game
         require(numTokens > (ONE_PLAY + FEE));
 
-        // A user can't enter a game while the game is ongoing
+        // Transfer the tokens to the address of this contract
+        gameToken.transferFrom(msg.sender, this, numTokens);
+
+        enterGame(numTokens);
+    }
+    
+    function enterGame(uint32 numTokens) internal {
+      // A user can't enter a game while the game is ongoing
         require(gameInProgress == false);
 
         // A user can't enter a game twice with the same address
@@ -60,9 +83,6 @@ contract GameManager {
 
         // We can't have more than 25 players?
         require(currPlayerIndex <= 25);
-
-        // Transfer the tokens to the address of this contract
-        gameToken.transferFrom(msg.sender, this, numTokens);
 
         // we stake the players tokens, and save it in an array
         gameBalances.push(numTokens);
@@ -81,7 +101,7 @@ contract GameManager {
             gameInProgress = true;
         }
         
-        GameJoined(msg.sender, numTokens, currPlayerIndex);
+        GameJoined(msg.sender, numTokens, currPlayerIndex);   
     }
 
     // What happens if some of the players don't vote??
@@ -89,13 +109,16 @@ contract GameManager {
         // The msg.sender is sending us the position where he is
         require(userPosition[position] == msg.sender);
 
-        // The persone who votes, must be one of the players
+        // The person who votes, must be one of the players
         require(usersInGame[msg.sender] == true);
 
         // A player can vote only once
         require(hasVoted[msg.sender] == false);
         
         bytes32 stateHash = keccak256(state);
+        
+        // we remove the user from game, so he can join in the next one
+        usersInGame[msg.sender] = false;
         
         if (currStateHash == 0x0) {
             currStateHash = stateHash;
@@ -143,6 +166,14 @@ contract GameManager {
 
         currPlayerIndex = 0;
     }
+    
+    function setGameToken(address gameTokenAddress) public onlyOwner {
+        gameToken = GameToken(gameTokenAddress);
+    }
+    
+    function isInPreSale() public constant returns(bool) {
+        return tokensGiven < 1000000 && now < (creationTime + 3 weeks);
+    }
 
     // FOR TESTING PURPOSES
 
@@ -160,6 +191,10 @@ contract GameManager {
     
     function resetGame() public onlyOwner {
         newGameSession();
+        
+        for(uint i = 0; i < currPlayerIndex; ++i) {
+            usersInGame[userPosition[i]] = false;
+        }
     }
 
     function startGame() public onlyOwner {

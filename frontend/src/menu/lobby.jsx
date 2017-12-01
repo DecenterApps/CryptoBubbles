@@ -30,7 +30,8 @@ class Lobby extends Component {
             joinedUsers: [],
             numPlayers: 0,
             isAdmin: false,
-            playersName: ''
+            playersName: '',
+            isPreSale: true,
         }
 
         this.joinGame = this.joinGame.bind(this);
@@ -38,6 +39,7 @@ class Lobby extends Component {
         this.onInputChange = this.onInputChange.bind(this);
         this.manualStart = this.manualStart.bind(this);
         this.resetGame = this.resetGame.bind(this);
+        this.joinGameFree = this.joinGameFree.bind(this);
 
         this.socket = io('http://localhost:60000');
 
@@ -87,8 +89,8 @@ class Lobby extends Component {
         gameTokenContract.setProvider(this.state.web3.currentProvider);
 
         try {
-            const gameTokenInstance = await gameTokenContract.at("0x237f0b439693b565115f0ff62df7fce23f81d1a5");
-            const gameManagerInstance = await gameManagerContract.at("0x3da2ce9724a918029ce1b8281274ec110277c4ff");
+            const gameTokenInstance = await gameTokenContract.at("0xdb000a176caaae3c5d5f865f0c09c308f0705416");
+            const gameManagerInstance = await gameManagerContract.at("0x7c9d887612cc88fc6c6e2f83d1e4fe2014ccb8f0");
                 
             this.setState({
                 gameTokenInstance,
@@ -183,6 +185,36 @@ class Lobby extends Component {
                 numTokens: event.args.numTokens.valueOf()
             };
 
+            localStorage.setItem(newUser.address, this.state.playersName);
+
+            this.socket.emit('user-joined', newUser);
+
+            this.setState({
+                tokensSubmited: 0,
+                joinedUsers: [...this.state.joinedUsers, newUser],
+                numPlayers: ++this.state.numPlayers
+            });
+
+        } catch(err) {
+            console.log('ERR', err);
+        }
+    }
+
+    async joinGameFree() {
+
+        const managerInstance = this.state.gameManagerInstance;
+
+        try {
+
+            const res = await managerInstance.joinGameFree({from: web3.eth.accounts[0]});
+
+            const event = res.logs[0];
+
+            const newUser = {
+                address: event.args.user,
+                numTokens: event.args.numTokens.valueOf()
+            };
+
             this.socket.emit('user-joined', newUser);
 
             this.setState({
@@ -213,9 +245,9 @@ class Lobby extends Component {
                 <h3>Token Balance: { this.state.tokenBalance }</h3>
                 <h4>{ this.state.numPlayers  } players have joined the game!</h4>
 
-                <input type="text" placeholder="Num of tokens" name="tokensSubmited" value={ this.state.tokensSubmited } onChange={ this.onInputChange }/>
+                {/* <input type="text" placeholder="Num of tokens" name="tokensSubmited" value={ this.state.tokensSubmited } onChange={ this.onInputChange }/> */}
                 <input type="text" placeholder="Players name" name="playersName" value={ this.state.playersName } onChange={ this.onInputChange }/>
-                <button onClick={ this.joinGame }>Join Game</button>
+                <button onClick={ this.joinGameFree }>Join Game</button>
 
                 <ul>
                     {
@@ -228,13 +260,9 @@ class Lobby extends Component {
                 <hr />
 
                 <div>
-                    <input type="text" placeholder="Num of tokens to buy" name="tokensToBuy" value={ this.state.tokensToBuy } onChange={ this.onInputChange }/>
-                    <button onClick={ this.buyTokens }>Buy Tokens</button>
+                    {/* <input type="text" placeholder="Num of tokens to buy" name="tokensToBuy" value={ this.state.tokensToBuy } onChange={ this.onInputChange }/>
+                    <button onClick={ this.buyTokens }>Buy Tokens</button> */}
 
-                    <div>
-                        In order to play the game you need to stake at least { MIN_TOKENS } Tokens by clicking join.
-                        When enough players join the game will start
-                    </div>
 
                     <div>
                         { this.state.isAdmin &&

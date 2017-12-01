@@ -11,35 +11,11 @@ contract GameToken is StandardToken {
 
     uint TOKEN_IN_WEI = 10000000000000;
 
-    function GameToken() public {
+    function GameToken(address gameManagerAddr) public {
         totalSupply = INITIAL_SUPPLY;
-        balances[this] = INITIAL_SUPPLY;
-    }
-
-    function buyTokens() public payable {
-        require(msg.value > TOKEN_IN_WEI);
-
-        uint numTokens = msg.value / TOKEN_IN_WEI;
-
-        balances[msg.sender] += numTokens;
-    }
-    
-    
-    // TEST method
-    function buyAndApprove(address gameManager) public payable {
-        require(msg.value > TOKEN_IN_WEI);
-
-        uint numTokens = msg.value / TOKEN_IN_WEI;
-
-        balances[msg.sender] += numTokens;
+        balances[this] = INITIAL_SUPPLY / 2;
+        balances[gameManagerAddr] = INITIAL_SUPPLY / 2;
         
-        approve(gameManager, balances[msg.sender]);
-    }
-
-    function withdrawEther(uint tokenAmount) public {
-        require(balances[msg.sender] > (tokenAmount * TOKEN_IN_WEI));
-
-        msg.sender.transfer(tokenAmount * TOKEN_IN_WEI);
     }
 
 }
