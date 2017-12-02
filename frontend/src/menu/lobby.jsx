@@ -89,8 +89,8 @@ class Lobby extends Component {
         gameTokenContract.setProvider(this.state.web3.currentProvider);
 
         try {
-            const gameTokenInstance = await gameTokenContract.at("0xdb000a176caaae3c5d5f865f0c09c308f0705416");
-            const gameManagerInstance = await gameManagerContract.at("0x7c9d887612cc88fc6c6e2f83d1e4fe2014ccb8f0");
+            const gameTokenInstance = await gameTokenContract.at("0xb75b76c67be99044dc054ba035642e363a659a74");
+            const gameManagerInstance = await gameManagerContract.at("0x80d16eca42f39aeb239141d455b486ff05f115a9");
                 
             this.setState({
                 gameTokenInstance,

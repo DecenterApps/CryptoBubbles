@@ -9,12 +9,17 @@ contract GameManager {
         _;
     }
     
+    modifier onlyServer {
+        require(msg.sender == server);
+        _;
+    }
+    
     event GameJoined(address indexed user, uint numTokens, uint playerPos);
 
-    uint32[] gameBalances; //TODO: take care of overflows
+    uint32[] public gameBalances; //TODO: take care of overflows
     uint public currPlayerIndex;
-    mapping (uint => address) userPosition;
-    mapping (address => bool) usersInGame;
+    mapping (uint => address) public userPosition;
+    mapping (address => bool) public usersInGame;
 
     mapping (address => uint) public balances;
     
@@ -29,9 +34,14 @@ contract GameManager {
     bool public callTheServer;
     bool public playersVoted;
     
-    uint tokensGiven;
-    uint creationTime;
+    uint public tokensGiven;
+    uint public creationTime;
+    address public server;
+    
+    uint submitStateStartTime;
 
+    uint REWARD_FOR_FINALIZE = 2000; // 2000 GT
+    uint VOTE_PERIOD = 5 minutes;
     uint32 ONE_PLAY = 1000;
     uint FEE = 200;
     uint MIN_PLAYERS = 5;
@@ -86,11 +96,10 @@ contract GameManager {
 
         // we stake the players tokens, and save it in an array
         gameBalances.push(numTokens);
-
+        
         // remember which position in the array did the player get
         userPosition[currPlayerIndex] = msg.sender;
 
-        // remember that the player has joined the current game
         usersInGame[msg.sender] = true;
 
         // Update the current position in the array
@@ -102,7 +111,7 @@ contract GameManager {
         }
         
         GameJoined(msg.sender, numTokens, currPlayerIndex);   
-    }
+     }
 
     // What happens if some of the players don't vote??
     function gameEnds(uint32[] state, uint position) public {
@@ -122,6 +131,7 @@ contract GameManager {
         
         if (currStateHash == 0x0) {
             currStateHash = stateHash;
+            submitStateStartTime = now;
             return;
         } 
         
@@ -141,6 +151,41 @@ contract GameManager {
         }
     }
 
+    // Call this if after n blocks not all players have voted
+    // This will be callabale by anyone and we'll reward the player for the call
+    function finalizeGame(uint32[] state) public {
+        require(now >= (submitStateStartTime + VOTE_PERIOD));
+        
+        // TODO: check for rounding error && possible attacks
+        // If majority of the verified has votes take that as true
+        if (numStateVerified > (currPlayerIndex / 2)) {
+            
+            bytes32 stateHash = keccak256(state);
+            
+            // A user gave a wrong score 
+            if(stateHash != currStateHash) {
+                return;
+            }
+            
+            submitState(state);
+            
+            // reward the player for calling this function
+            gameToken.transfer(msg.sender, REWARD_FOR_FINALIZE);
+            
+        } else {
+            // who you gonna call when a cheater appears?
+            callTheServer = true;
+        }
+    }
+    
+    // Somebody tried the cheat the server will punish the bad 
+    // and reward the good
+    function judgment(uint32[] state) public onlyServer {
+        require(callTheServer == true);
+        
+        submitState(state);
+   
+    }
 
     function submitState(uint32[] state) internal {
         require(playersVoted == true);
@@ -163,8 +208,10 @@ contract GameManager {
         playersVoted = false;
         callTheServer = false;
         numStateVerified = 0;
+        delete gameBalances;
 
         currPlayerIndex = 0;
+        tokensGiven;
     }
     
     function setGameToken(address gameTokenAddress) public onlyOwner {
@@ -173,6 +220,10 @@ contract GameManager {
     
     function isInPreSale() public constant returns(bool) {
         return tokensGiven < 1000000 && now < (creationTime + 3 weeks);
+    }
+    
+    function setServer(address _server) public onlyOwner {
+        server = _server;
     }
 
     // FOR TESTING PURPOSES
@@ -192,9 +243,7 @@ contract GameManager {
     function resetGame() public onlyOwner {
         newGameSession();
         
-        for(uint i = 0; i < currPlayerIndex; ++i) {
-            usersInGame[userPosition[i]] = false;
-        }
+        usersInGame[msg.sender] = false;
     }
 
     function startGame() public onlyOwner {
