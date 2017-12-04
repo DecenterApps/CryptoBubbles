@@ -53,11 +53,7 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('can-enter', (addr) => {
-        console.log("User want to enter ", addr);
-
         const foundUser = lobby.find(u => u.address === addr);
-
-        console.log(lobby);
 
         let res = false;
 
@@ -76,7 +72,7 @@ io.on('connection', async (socket) => {
     
             currPlayers[address] = pos; 
             
-            //Does this emit to the calling socket?
+            // Does this emit to the calling socket?
             socket.broadcast.emit('player-added', pos, address);
         });
     
