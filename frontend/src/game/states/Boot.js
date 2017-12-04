@@ -22,7 +22,7 @@ export default class extends Phaser.State {
     this.load.image('decenter', 'assets/images/decenter-logo.png');
     this.load.image('background', 'assets/images/tile.jpeg');    
     this.load.image('dot', 'assets/images/dot.png');
-    game.load.spritesheet('button', 'assets/button_sprite_sheet.png', 193, 71);   
+    game.load.spritesheet('button', 'assets/button_sprite_sheet.png', 150, 50);   
 
     setTimeout(() => {
 

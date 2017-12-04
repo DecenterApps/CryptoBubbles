@@ -145,7 +145,9 @@ class Lobby extends Component {
 
     async manualStart() {
         try {
-             await this.state.gameManagerInstance.startGame({from: web3.eth.accounts[0]});
+            await this.state.gameManagerInstance.startGame({from: web3.eth.accounts[0]});
+
+            console.log("Starting game...");
 
             this.socket.emit('start-game');
 
@@ -213,17 +215,19 @@ class Lobby extends Component {
             const newUser = {
                 address: event.args.user,
                 userName: this.state.playersName,
-                numTokens: event.args.numTokens.valueOf()
+                numTokens: event.args.numTokens.valueOf(),
+                position: this.state.numPlayers
             };
 
-            localStorage.setItem(newUser.address, this.state.playersName);
+            localStorage.setItem(newUser.address, JSON.stringify(newUser));
 
             this.socket.emit('user-joined', newUser);
 
             this.setState({
                 tokensSubmited: 0,
                 joinedUsers: [...this.state.joinedUsers, newUser],
-                numPlayers: ++this.state.numPlayers
+                numPlayers: ++this.state.numPlayers,
+                playersName: ''
             });
 
         } catch(err) {
@@ -244,8 +248,8 @@ class Lobby extends Component {
     render() {
         return (
             <div className="main-form">
-                <div>Lobby of the game</div>
-                <h3>Token Balance: { this.state.tokenBalance }</h3>
+                <div>Game Lobby</div>
+                {/* <h3>Token Balance: { this.state.tokenBalance }</h3> */}
                 <h4>{ this.state.numPlayers  } players have joined the game!</h4>
 
                 {/* <input type="text" placeholder="Num of tokens" name="tokensSubmited" value={ this.state.tokensSubmited } onChange={ this.onInputChange }/> */}

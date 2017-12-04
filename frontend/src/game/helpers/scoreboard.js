@@ -23,7 +23,7 @@ function formatForDisplay() {
 
     for(const address of Object.keys(scoreboard)) {
         if (scoreboard[address]) {
-            scores.push([address, scoreboard[address]]);
+            scores.push([address, scoreboard[address].toString()]);
         }
     }
 
