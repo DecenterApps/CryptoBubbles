@@ -52,6 +52,23 @@ io.on('connection', async (socket) => {
         socket.broadcast.emit('add-user');
     });
 
+    socket.on('can-enter', (addr) => {
+        console.log("User want to enter ", addr);
+
+        const foundUser = lobby.find(u => u.address === addr);
+
+        console.log(lobby);
+
+        let res = false;
+
+        if (foundUser) {
+            res = true;
+        }
+
+        socket.emit('client-enter', res);
+
+    });
+
     if (gameStarted) {
         socket.on('join-game', (pos, address) => {
             socket.emit('load-players', currPlayers);
@@ -100,6 +117,17 @@ io.on('connection', async (socket) => {
 http.listen(PORT, () => {
   console.log('listening on *:60000');
 });
+
+
+function nameAlreadyExists(name) {
+    const foundUser = lobby.find(user => user.userName === name);
+
+    if(foundUser) {
+        return true;
+    }
+
+    return false;
+}
 
 function addPoints(address, points) {
     if (scoreboard[address]) {

@@ -4,10 +4,8 @@ import Player from '../objects/Player';
 
 import web3Helper from '../helpers/web3Helper';
 import scoreboard from '../helpers/scoreboard';
+import socketHelper from '../helpers/socketHelper';
 
-const io = require('socket.io-client');
-
-const TESTING = true;
 let gameTime = 60; //1 min
 let playersSpeed = 300;
 
@@ -19,10 +17,6 @@ export default class extends Phaser.State {
     this.dots = {};
 
     this.playerAddr = web3Helper.getUserAccount();
-
-    if (TESTING) {
-      this.playerAddr = Math.random().toString(36).substr(2, 10);
-    }
 
     game.physics.startSystem(Phaser.Physics.ARCADE);    
     
@@ -47,11 +41,13 @@ export default class extends Phaser.State {
 
     this.player.body.setCircle(32);
     this.player.body.mass = 10;
+
+    this.player.playerName = localStorage.getItem(this.playerAddr);
     
     // game.camera.deadzone = new Phaser.Rectangle(100, 100, 800, 800);
     game.camera.follow(this.player);
 
-    this.socket = io('http://localhost:60000');
+    this.socket = socketHelper.socket;
 
     this.socket.emit('join-game', this.player.position, this.playerAddr);
 

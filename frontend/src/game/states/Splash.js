@@ -5,18 +5,15 @@ export default class extends Phaser.State {
   init () {}
 
   preload () {
-    this.loaderBg = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'loaderBg')
-    this.loaderBar = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'loaderBar')
-    centerGameObjects([this.loaderBg, this.loaderBar])
+    // this.loaderBg = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'loaderBg')
+    // this.loaderBar = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'loaderBar')
+    // centerGameObjects([this.loaderBg, this.loaderBar])
 
-    this.load.setPreloadSprite(this.loaderBar)
+    // this.load.setPreloadSprite(this.loaderBar)
     //
     // load your assets
     //
-    this.load.image('decenter', 'assets/images/decenter-logo.png');
-    this.load.image('background', 'assets/images/tile.jpeg');    
-    this.load.image('dot', 'assets/images/dot.png');
-    game.load.spritesheet('button', 'assets/button_sprite_sheet.png', 193, 71);    
+  
   }
 
   create () {

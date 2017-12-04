@@ -212,8 +212,11 @@ class Lobby extends Component {
 
             const newUser = {
                 address: event.args.user,
+                userName: this.state.playersName,
                 numTokens: event.args.numTokens.valueOf()
             };
+
+            localStorage.setItem(newUser.address, this.state.playersName);
 
             this.socket.emit('user-joined', newUser);
 
@@ -252,7 +255,7 @@ class Lobby extends Component {
                 <ul>
                     {
                         this.state.joinedUsers.map(user => 
-                        <li>{ user.address.substring(0, 12) }... : { user.numTokens } Tokens</li>
+                        <li>{ user.userName } : { user.numTokens } Tokens</li>
                         )
                     }
                 </ul>
