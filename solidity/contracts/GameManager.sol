@@ -15,6 +15,8 @@ contract GameManager {
     }
     
     event GameJoined(address indexed user, uint numTokens, uint playerPos);
+    event GameFinalized(address user, uint numPlayers);
+    event ServerNeeded();
 
     uint32[] public gameBalances; //TODO: take care of overflows
     uint public currPlayerIndex;
@@ -148,6 +150,7 @@ contract GameManager {
         } else {
             // Bad stuff somone is cheating, server will punish the cheater and give the money to the poor
             callTheServer = true;
+            ServerNeeded();
         }
     }
 
@@ -175,6 +178,7 @@ contract GameManager {
         } else {
             // who you gonna call when a cheater appears?
             callTheServer = true;
+            ServerNeeded();
         }
     }
     
@@ -193,6 +197,8 @@ contract GameManager {
         for(uint i = 0; i < currPlayerIndex; ++i) {
             balances[userPosition[i]] += state[i];
         }
+        
+        GameFinalized(msg.sender, currPlayerIndex);
 
         newGameSession();
     }
@@ -244,6 +250,10 @@ contract GameManager {
         newGameSession();
         
         usersInGame[msg.sender] = false;
+        
+        for(uint i = 0; i < currPlayerIndex; ++i) {
+            usersInGame[userPosition[i]] = false;
+        }
     }
 
     function startGame() public onlyOwner {

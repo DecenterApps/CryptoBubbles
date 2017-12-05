@@ -44,6 +44,7 @@ class Lobby extends Component {
         this.socket = io('http://localhost:60000');
 
         this.socket.on('game-started', () => {
+            console.log("Game started");
             window.location.href = 'game.html';
         });
 
@@ -57,7 +58,7 @@ class Lobby extends Component {
 
         this.socket.on('add-user', (user) => {
             this.setState({
-                joinedUsers: [...joinedUsers, user]
+                joinedUsers: [...this.state.joinedUsers, user]
             });
         });
     }
@@ -89,8 +90,8 @@ class Lobby extends Component {
         gameTokenContract.setProvider(this.state.web3.currentProvider);
 
         try {
-            const gameTokenInstance = await gameTokenContract.at("0xb75b76c67be99044dc054ba035642e363a659a74");
-            const gameManagerInstance = await gameManagerContract.at("0x80d16eca42f39aeb239141d455b486ff05f115a9");
+            const gameTokenInstance = await gameTokenContract.at("0x380794273f06e86f1bc63303e39c1f122f1f01bf");
+            const gameManagerInstance = await gameManagerContract.at("0x64d9e557219a774b3006764359fe7c13ed1d5d4b");
                 
             this.setState({
                 gameTokenInstance,

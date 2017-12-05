@@ -19,6 +19,11 @@ function submitScoreState(state, position, callback) {
 
 }
 
+function listenForGameFinished() {
+    
+}
+
+// TODO: async
 function getUserAccount() {
     return web3.eth.accounts[0];
 }

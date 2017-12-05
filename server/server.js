@@ -26,6 +26,9 @@ io.on('connection', async (socket) => {
 
         const gameHasStarted = await gameManager.hasGameStarted();
 
+        console.log("Game started on contract?", gameHasStarted);
+
+
         if (gameHasStarted && !gameInProgress) {
             io.sockets.emit('game-started');
             gameStarted = true;
@@ -34,8 +37,8 @@ io.on('connection', async (socket) => {
             setTimeout(() => {
                 
                 io.sockets.emit('game-ended');
-                // gameStarted = false;
-                // gameInProgress = false;
+                gameStarted = false;
+                gameInProgress = false;
 
             }, GAME_TIME)
     
@@ -49,7 +52,7 @@ io.on('connection', async (socket) => {
 
     socket.on('user-joined', (user) => {
         lobby.push(user);
-        socket.broadcast.emit('add-user');
+        socket.broadcast.emit('add-user', user);
     });
 
     socket.on('can-enter', (addr) => {
