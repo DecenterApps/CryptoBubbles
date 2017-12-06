@@ -10,7 +10,6 @@ export default class extends Phaser.State {
 
     this.form = new Phaser.Rectangle(0, 550, 800, 50);
 
-
     const style = { font: "16px Courier", fill: "#fff", tabs: [ 274, 120] };
     
     const headings = [ 'Name', 'Score' ];

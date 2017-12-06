@@ -44,7 +44,7 @@ export default class extends Phaser.State {
 
     this.setupListeners();
 
-    this.createTimer();
+    this.showTimer();
 
   }
 
@@ -60,18 +60,10 @@ export default class extends Phaser.State {
     this.timerText.fixedToCamera = true;
   }
 
-  createTimer() {
-    const secondsInterval = setInterval(() => {
-      --gameTime;
-
-      if (gameTime <= 0) {
-        this.timerText.setText("Game has ended");
-        clearInterval(secondsInterval);
-      } else {
-        this.timerText.setText("Time left: " + gameTime);
-      }
-    }, 1000);
-
+  showTimer() {
+    this.socket.on('seconds', (seconds) => {
+      this.timerText.setText("Time left: " + seconds + ' s');
+    });
   }
 
   addPlayer(pos, address, name) {
@@ -220,7 +212,7 @@ export default class extends Phaser.State {
     });
 
     this.socket.on('game-ended', () => {
-
+      this.game.destroy();
       this.state.start('GameFinished');
     });
   }

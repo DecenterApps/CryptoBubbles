@@ -58,7 +58,8 @@ class Lobby extends Component {
 
         this.socket.on('add-user', (user) => {
             this.setState({
-                joinedUsers: [...this.state.joinedUsers, user]
+                joinedUsers: [...this.state.joinedUsers, user],
+                numPlayers: ++this.state.numPlayers
             });
         });
     }
@@ -90,8 +91,8 @@ class Lobby extends Component {
         gameTokenContract.setProvider(this.state.web3.currentProvider);
 
         try {
-            const gameTokenInstance = await gameTokenContract.at("0x380794273f06e86f1bc63303e39c1f122f1f01bf");
-            const gameManagerInstance = await gameManagerContract.at("0x64d9e557219a774b3006764359fe7c13ed1d5d4b");
+            const gameTokenInstance = await gameTokenContract.at("0x69a9806497a01edfe61e979394d42c0c992c1c24");
+            const gameManagerInstance = await gameManagerContract.at("0xf7846edfc78b0f673704929df98371feffe8b8b5");
                 
             this.setState({
                 gameTokenInstance,

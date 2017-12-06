@@ -1,3 +1,4 @@
+
 const app = require('express')();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
@@ -19,6 +20,9 @@ let gameInProgress = false;
 
 const GAME_TIME = 1000 * 60 * 1; //1 minute
 
+let secondsInGame = 0;
+let secondsInterval;
+
 io.on('connection', async (socket) => {
     console.log('a user connected');
 
@@ -34,11 +38,15 @@ io.on('connection', async (socket) => {
             gameStarted = true;
             gameInProgress = true;
 
+            startClock(socket);
+
             setTimeout(() => {
                 
-                io.sockets.emit('game-ended');
+                io.sockets.emit('game-ended', scoreboard);
                 gameStarted = false;
                 gameInProgress = false;
+
+                clearInterval(secondsInterval);
 
             }, GAME_TIME)
     
@@ -160,6 +168,14 @@ function createDot() {
     dots[pos.x + " " + pos.y] = pos;
 
     return pos;
+}
+
+function startClock(socket) {
+    secondsInterval = setInterval(() => {
+        console.log(secondsInGame);
+        secondsInGame++;
+        socket.emit('seconds', secondsInGame);
+    }, 1000);
 }
  
 
