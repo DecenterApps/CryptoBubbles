@@ -62,7 +62,7 @@ export default class extends Phaser.State {
 
   showTimer() {
     this.socket.on('seconds', (seconds) => {
-      this.timerText.setText("Time left: " + seconds + ' s');
+      this.timerText.setText("Time left: " + (gameTime - seconds) + ' s');
     });
   }
 
@@ -212,7 +212,7 @@ export default class extends Phaser.State {
     });
 
     this.socket.on('game-ended', () => {
-      this.game.destroy();
+      //this.game.destroy();
       this.state.start('GameFinished');
     });
   }

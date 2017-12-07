@@ -38,7 +38,7 @@ io.on('connection', async (socket) => {
             gameStarted = true;
             gameInProgress = true;
 
-            startClock(socket);
+            startClock();
 
             setTimeout(() => {
                 
@@ -55,7 +55,7 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('get-users', () => {
-        socket.emit('load-users', lobby);
+        socket.emit('load-users', lobby, gameInProgress);
     });
 
     socket.on('user-joined', (user) => {
@@ -170,11 +170,11 @@ function createDot() {
     return pos;
 }
 
-function startClock(socket) {
+function startClock() {
     secondsInterval = setInterval(() => {
         console.log(secondsInGame);
         secondsInGame++;
-        socket.emit('seconds', secondsInGame);
+        io.sockets.emit('seconds', secondsInGame);
     }, 1000);
 }
  

@@ -32,7 +32,8 @@ class Lobby extends Component {
             isAdmin: false,
             playersName: '',
             isPreSale: true,
-        }
+            gameInProgress: false
+        };
 
         this.joinGame = this.joinGame.bind(this);
         this.buyTokens = this.buyTokens.bind(this);
@@ -50,10 +51,9 @@ class Lobby extends Component {
 
         this.socket.emit('get-users');
 
-        this.socket.on('load-users', (users) => {
-            this.setState({
-                joinedUsers: users
-            });
+        this.socket.on('load-users', (users, gameInProgress) => {
+            console.log(gameInProgress);
+            this.setState({ joinedUsers: users, gameInProgress });
         });
 
         this.socket.on('add-user', (user) => {
@@ -61,6 +61,11 @@ class Lobby extends Component {
                 joinedUsers: [...this.state.joinedUsers, user],
                 numPlayers: ++this.state.numPlayers
             });
+        });
+
+        // How many seconds of the game has passed (show in UI while people are waiting)
+        this.socket.on('seconds', (sec) => {
+            // console.log(sec);
         });
     }
 
@@ -251,6 +256,10 @@ class Lobby extends Component {
         return (
             <div className="main-form">
                 <div>Game Lobby</div>
+                {
+                    this.state.gameInProgress && 
+                    <div>A game is currently in progress!</div>
+                }
                 {/* <h3>Token Balance: { this.state.tokenBalance }</h3> */}
                 <h4>{ this.state.numPlayers  } players have joined the game!</h4>
 

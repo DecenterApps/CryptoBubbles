@@ -16,7 +16,7 @@ export default class extends Phaser.State {
 
     this.acc = web3Helper.getUserAccount();
 
-    let text = this.add.text(this.world.centerX, this.world.centerY, 'Loading the game...', { font: '16px Arial', fill: '#02011e', align: 'center' });
+    let text = this.add.text(this.world.centerX, this.world.centerY, 'Loading the game...', { font: '20px Arial', align: 'center' });
     text.anchor.setTo(0.5, 0.5);
 
     this.load.image('decenter', 'assets/images/decenter-logo.png');
@@ -34,6 +34,10 @@ export default class extends Phaser.State {
 
         if(!res) {
           text.setText("Sorry you are not a register player in the current game");
+
+          // setTimeout(() => {
+          //   window.location.href = 'index.html';
+          // }, 2000);
         }
 
         socketHelper.socket.emit('can-enter', this.acc);
