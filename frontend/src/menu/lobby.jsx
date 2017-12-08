@@ -78,7 +78,7 @@ class Lobby extends Component {
 
           this.setState({
               isAdmin: web3.eth.accounts[0] === "0x93cdb0a93fc36f6a53ed21ecf6305ab80d06beca"
-          })
+          });
 
           this.socket.emit('get-users', web3.eth.accounts[0]);
 
@@ -256,32 +256,33 @@ class Lobby extends Component {
     render() {
         return (
             <div className="row login_box">
-            <div className="col-md-12 col-xs-12" align="center">
-                <div className="line">
-                    { this.state.gameInProgress && 
-                        <h3>A game is currently in progress!</h3>
-                    }
-
-                    { !this.state.gameInProgress && 
-                        <h3>Crypto Bubbles</h3>
-                    }
-                </div>
+            <div className="title-wrapper line">
+                {
+                    this.state.gameInProgress &&
+                    <h3>A game is currently in progress!</h3>
+                }
+                {
+                    !this.state.gameInProgress &&
+                    <h3>Crypto Bubbles</h3>
+                }
                 {/* <div className="outter"><img src="https://www.ethereum.org/images/logos/ETHEREUM-ICON_Black_small.png" className="image-circle"/></div>    */}
                 {/* <h2>CryptoBubbles</h2>
                 <span>Game time 10 minutes</span> */}
             </div>
-            <div className="col-md-6 col-xs-6 follow line" align="center">
-                <h3>
-                    {this.state.numPlayers}/5 <br/> <span>People joined</span>
-                </h3>
+            <div>
+                <div className="col-md-6 col-xs-6 follow line" align="center">
+                    <h3>
+                        {this.state.numPlayers}/5 <br/> <span>People joined</span>
+                    </h3>
+                </div>
+                <div className="col-md-6 col-xs-6 follow line" align="center">
+                    <h3>
+                         1000 BT<br/> <span>Tokens for entry</span>
+                    </h3>
+                </div>
             </div>
-            <div className="col-md-6 col-xs-6 follow line" align="center">
-                <h3>
-                     1000 BT<br/> <span>Tokens for entry</span>
-                </h3>
-            </div>
-            
-            <div className="col-md-12 col-xs-12 login_control">
+
+            <div className="login_control">
                     
                     <div className="control">
                         <div className="label">Username</div>
@@ -305,6 +306,22 @@ class Lobby extends Component {
                     </div>
                     
             </div>
+
+            {
+                this.state.joinedUsers.length > 0 &&
+                <div className="joined-users">
+                    <h3>Joined users: </h3>
+                    <ul className="joined-users-list">
+                      {
+                        this.state.joinedUsers.map((user, i) => (
+                          <li key={user.userName}>
+                            {user.userName} ({user.numTokens} BT)
+                          </li>
+                        ))
+                      }
+                    </ul>
+                </div>
+            }
         </div>
         );
     }
