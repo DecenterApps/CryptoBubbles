@@ -310,5 +310,4 @@ class Lobby extends Component {
     }
 }
 
-// render an instance of Clock into <body>:
-render(<Lobby />, document.body);
+export default Lobby;

@@ -16,7 +16,7 @@ var definePlugin = new webpack.DefinePlugin({
 module.exports = {
   entry: {
       game: path.resolve(__dirname, 'src/game/main.js'),
-      menu: path.resolve(__dirname, 'src/menu/lobby.jsx'),
+      menu: path.resolve(__dirname, 'src/menu/index.jsx'),
   },
   devtool: 'cheap-source-map',
   output: {
