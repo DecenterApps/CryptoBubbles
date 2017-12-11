@@ -5,7 +5,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider("https://kovan.infura.io")
 const gameManagerAbi = require('../solidity/build/contracts/GameManager');
 
 const gameManager = web3.eth.contract(gameManagerAbi.abi)
-.at('0xf7846edfc78b0f673704929df98371feffe8b8b5');
+.at('0x386f7db51eb2e7f0bdbec79023616769c9b29936');
 
 async function hasGameStarted() {
     try {
