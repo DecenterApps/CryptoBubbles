@@ -212,8 +212,11 @@ export default class extends Phaser.State {
     });
 
     this.socket.on('game-ended', () => {
-      //this.game.destroy();
-      this.state.start('GameFinished');
+      scoreboard.saveScore();
+      //shutdown everything here
+
+      // move to end screen
+      window.location.href = '/end';
     });
   }
 

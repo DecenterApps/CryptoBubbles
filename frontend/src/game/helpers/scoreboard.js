@@ -42,10 +42,15 @@ function formatForContract() {
     return scores;
 }
 
+function saveScore() {
+    localStorage.setItem('score', scoreboard);
+}
+
 module.exports = {
     getScore,
     setScore,
     updateScore,
     formatForDisplay,
     formatForContract,
+    saveScore,
 }

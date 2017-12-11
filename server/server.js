@@ -19,6 +19,7 @@ let gameStarted = false;
 let gameInProgress = false;
 
 const GAME_TIME = 1000 * 60 * 1; //1 minute
+const WAIT_FOR_VOTES = 1000 * 180; //3 minutes
 
 let secondsInGame = 0;
 let secondsInterval;
@@ -47,6 +48,8 @@ io.on('connection', async (socket) => {
                 gameInProgress = false;
 
                 clearInterval(secondsInterval);
+
+                submitVotesInterval();
 
             }, GAME_TIME)
     
@@ -168,6 +171,12 @@ function createDot() {
     dots[pos.x + " " + pos.y] = pos;
 
     return pos;
+}
+
+function submitVotesInterval() {
+    setTimeout(() => {
+        
+    }, WAIT_FOR_VOTES)
 }
 
 function startClock() {

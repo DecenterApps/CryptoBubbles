@@ -16,6 +16,7 @@ contract GameManager {
     
     event GameJoined(address indexed user, uint numTokens, uint playerPos);
     event GameFinalized(address user, uint numPlayers);
+    event Voted(address user, bytes32 stateHash);
     event ServerNeeded();
 
     uint32[] public gameBalances; //TODO: take care of overflows
@@ -127,6 +128,8 @@ contract GameManager {
         require(hasVoted[msg.sender] == false);
         
         bytes32 stateHash = keccak256(state);
+
+        Voted(msg.sender, stateHash);
         
         // we remove the user from game, so he can join in the next one
         usersInGame[msg.sender] = false;
