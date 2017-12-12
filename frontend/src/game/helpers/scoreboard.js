@@ -1,56 +1,43 @@
 
-const scoreboard = {};
+let scoreboard = [];
+
+function init(_scoreboard) {
+    scoreboard = _scoreboard;
+
+    scoreboard.forEach(player => {
+        player.score = 0;
+    });
+
+    console.log(scoreboard);
+}
 
 function getScore(address) {
-    if(scoreboard[address] !== undefined) {
-        return scoreboard[address];
-    } else {
-        scoreboard[address] = 0;
-        return scoreboard[address];
-    }
+    return _getByAddress(address).score;
 }
 
 function setScore(address, amount) {
-    scoreboard[address] = amount;
+    const user = _getByAddress(address);
+    user.score = amount;
 }
 
 function updateScore(address, amount) {
-    scoreboard[address] += amount;
-}
-
-function formatForDisplay() {
-    let scores = [];
-
-    for(const address of Object.keys(scoreboard)) {
-        if (scoreboard[address]) {
-            scores.push([address, scoreboard[address].toString()]);
-        }
-    }
-
-    return scores;
-}
-
-function formatForContract() {
-    let scores = [];
-
-    for(const address of Object.keys(scoreboard)) {
-        if (scoreboard[address]) {
-            scores.push(scoreboard[address]);
-        }
-    }
-
-    return scores;
+    const user = _getByAddress(address);
+    user.score += amount;
 }
 
 function saveScore() {
-    localStorage.setItem('score', scoreboard);
+    localStorage.setItem('score', JSON.stringify(scoreboard));
+}
+
+
+function _getByAddress(address) {
+    return scoreboard.find(s => s.address === address);
 }
 
 module.exports = {
+    init,
     getScore,
     setScore,
     updateScore,
-    formatForDisplay,
-    formatForContract,
     saveScore,
 }

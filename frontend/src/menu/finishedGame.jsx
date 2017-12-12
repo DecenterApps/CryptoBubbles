@@ -1,8 +1,10 @@
 import { h, render, Component } from 'preact';
+import contract from 'truffle-contract';
 
 import web3Helper from './web3Helper';
 import socketHelper from './socketHelper';
 
+import gameManager from '../../../solidity/build/contracts/GameManager.json';
 
 class FinishedGame extends Component {
 
@@ -10,24 +12,40 @@ class FinishedGame extends Component {
         super(props);
 
         //grab the score
-        const score = localStorage.getItem('score');
+        const scoreInStorage = localStorage.getItem('score');
+
+        let score = [];
+
+        if (scoreInStorage) {
+            score = JSON.parse(scoreInStorage);
+        }
 
         this.state = {
             web3: null,
             numPlayersVoted: 0,
             score,
-            address: ''
+            address: '',
+            gameManagerInstance: null,
+            usersWhoVoted: []
         };
+
+        console.log(score);
 
         this.socket = socketHelper();
 
-        this.socket.on('in-voting', (inVoting) => {
-            console.log(" in voting ", inVoting);
+        this.socket.on('in-voting', (inVoting, votes) => {
+            if(!inVoting) {
+                window.location.href = "/";
+            }
 
-            // if(!inVoting) {
-            //     window.location.href = "/";
-            // }
+            this.setState({
+                numPlayersVoted: votes.length,
+                usersWhoVoted: votes
+            });
         });
+
+        this.submitState = this.submitState.bind(this);
+        this.parseStateForContract = this.parseStateForContract.bind(this);  
 
     }
 
@@ -38,7 +56,19 @@ class FinishedGame extends Component {
         web3Helper.then(async (results) => {
           const web3 = results.web3Instance;
 
-          //set up the address here
+          const gameManagerContract = contract(gameManager);
+          gameManagerContract.setProvider(web3.currentProvider);
+
+          try {
+            const gameManagerInstance = await gameManagerContract.at("0x386f7db51eb2e7f0bdbec79023616769c9b29936");
+            
+            this.setState({
+                gameManagerInstance,
+            });
+            
+          } catch(err) {
+              console.log(err);
+          }
 
 
           this.setState({
@@ -48,16 +78,32 @@ class FinishedGame extends Component {
         });
     }
 
-    submitState() {
+    async submitState() {
         console.log("Submit state called");
         try {
     
           const user = localStorage.getItem(this.state.address);
     
           if(user) {
-            web3Helper.submitScoreState(this.scoreState, JSON.parse(user).position, (res) => {
-              console.log(res);
-            });
+
+            const state = this.parseStateForContract();
+
+            try {
+                await this.state.gameManagerInstance.gameEnds(state, JSON.parse(user).position, {from: this.state.address}); 
+                
+                // send to server
+                this.socket.emit('voted', user.userName);
+
+                console.log("Vote casted!!", numPlayersVoted);
+
+                this.setState({
+                    numPlayersVoted: this.state.numPlayersVoted++
+                });
+
+            } catch(err) {
+                console.log(err);
+            }
+            
           } else {
             console.log("Unable to find the user, call the server");
           }
@@ -66,7 +112,11 @@ class FinishedGame extends Component {
         } catch(err) {
           console.log(err);
         }
-      }
+    }
+
+    parseStateForContract() {
+        return this.state.score.map(s => s.score);
+    }
 
     render() {
         return (
@@ -94,10 +144,26 @@ class FinishedGame extends Component {
             <div className="col-md-12 col-xs-12 login_control">
                     
                     <div align="center">
-                         <button className="btn btn-orange" onClick={ this.joinGameFree }>Finalize Game</button>
+                         <button className="btn btn-orange" onClick={ this.submitState }>Finalize Game</button>
                     </div>
                     
             </div>
+
+            {
+                this.state.usersWhoVoted.length > 0 &&
+                <div className="joined-users">
+                    <h3>Joined users: </h3>
+                    <ul className="joined-users-list">
+                      {
+                        this.state.usersWhoVoted.map((user, i) => (
+                          <li key={user.userName}>
+                            {user.userName} Voted!
+                          </li>
+                        ))
+                      }
+                    </ul>
+                </div>
+            }
         </div>
         );
     }

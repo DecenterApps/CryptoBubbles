@@ -19,6 +19,8 @@ let gameStarted = false;
 let gameInProgress = false;
 let gameInVoting = false;
 
+let usersWhoVoted = [];
+
 const GAME_TIME = 1000 * 60 * 1; //1 minute
 const WAIT_FOR_VOTES = 1000 * 180; //3 minutes
 
@@ -33,13 +35,13 @@ io.on('connection', async (socket) => {
         const gameHasStarted = await gameManager.hasGameStarted();
 
         console.log("Game started on contract?", gameHasStarted);
-
+ 
 
         if (gameHasStarted && !gameInProgress) {
             io.sockets.emit('game-started');
             gameStarted = true;
             gameInProgress = true;
-
+ 
             startClock();
 
             setTimeout(() => {
@@ -47,7 +49,7 @@ io.on('connection', async (socket) => {
                 io.sockets.emit('game-ended', scoreboard);
                 gameStarted = false;
                 gameInProgress = false;
-                gameInProgress = true;
+                gameInVoting = true;
 
                 clearInterval(secondsInterval);
 
@@ -82,15 +84,23 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('in-voting', () => {
-        socket.emit('in-voting', gameInVoting);
+        socket.emit('in-voting', gameInVoting, usersWhoVoted);
     });
 
+    socket.on('voted', (user) => {
+        console.log("User voted!");
+        usersWhoVoted.push(user);
+    });  
+
     if (gameStarted) {
+
+        io.sockets.emit('load-scoreboard', lobby);
+
         socket.on('join-game', (pos, address) => {
             socket.emit('load-players', currPlayers);
             socket.emit('load-dots', dots);
     
-            currPlayers[address] = pos; 
+            currPlayers[address] = pos;
             
             // Does this emit to the calling socket?
             socket.broadcast.emit('player-added', pos, address);

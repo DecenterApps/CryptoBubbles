@@ -6,7 +6,7 @@ import web3Helper from '../helpers/web3Helper';
 
 export default class extends Phaser.State {
   init () {
-    this.stage.backgroundColor = '#EDEEC9';
+    this.stage.backgroundColor = '#2B2B2B';
     this.fontsReady = false;
     this.canEnterGame = false;
     this.fontsLoaded = this.fontsLoaded.bind(this);

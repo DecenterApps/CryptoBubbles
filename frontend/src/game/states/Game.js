@@ -161,6 +161,8 @@ export default class extends Phaser.State {
 
   setupListeners() {
 
+    scoreboard.init(JSON.parse(localStorage.getItem('score')));
+
     this.socket.on('load-players', (players) => {
       for (const address of Object.keys(players)) {
         if(this.playerAddr !== address) {

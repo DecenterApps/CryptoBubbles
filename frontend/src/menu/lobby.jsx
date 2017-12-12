@@ -46,6 +46,7 @@ class Lobby extends Component {
 
         this.socket.on('game-started', () => {
             console.log("Game started");
+            localStorage.setItem('score', JSON.stringify(this.state.joinedUsers));
             window.location.href = 'game.html';
         });
 
@@ -98,7 +99,7 @@ class Lobby extends Component {
         try {
             const gameTokenInstance = await gameTokenContract.at("0x6b17c11b0617f2d4fcd8f5f963077c7fca9f3bff");
             const gameManagerInstance = await gameManagerContract.at("0x386f7db51eb2e7f0bdbec79023616769c9b29936");
-                
+                            
             this.setState({
                 gameTokenInstance,
                 gameManagerInstance
@@ -177,36 +178,34 @@ class Lobby extends Component {
 
     async joinGame() {
 
-        const numTokens = this.state.tokensSubmited;
-        const managerInstance = this.state.gameManagerInstance;
+        // const numTokens = this.state.tokensSubmited;
+        // const managerInstance = this.state.gameManagerInstance;
 
-        if (numTokens < MIN_TOKENS) {
-            console.log("Need more tokens");
-        }
+        // if (numTokens < MIN_TOKENS) {
+        //     console.log("Need more tokens");
+        // }
 
-        try {
-            const res = await managerInstance.joinGame(web3.eth.accounts[0], numTokens, {from: web3.eth.accounts[0]});
+        // try {
+        //     const res = await managerInstance.joinGame(web3.eth.accounts[0], numTokens, {from: web3.eth.accounts[0]});
 
-            const event = res.logs[0];
+        //     const event = res.logs[0];
 
-            const newUser = {
-                address: event.args.user,
-                numTokens: event.args.numTokens.valueOf()
-            };
+        //     const newUser = {
+        //         address: event.args.user,
+        //         numTokens: event.args.numTokens.valueOf()
+        //     };
 
-            localStorage.setItem(newUser.address, this.state.playersName);
+        //     this.socket.emit('user-joined', newUser);
 
-            this.socket.emit('user-joined', newUser);
+        //     this.setState({
+        //         tokensSubmited: 0,
+        //         joinedUsers: [...this.state.joinedUsers, newUser],
+        //         numPlayers: ++this.state.numPlayers
+        //     });
 
-            this.setState({
-                tokensSubmited: 0,
-                joinedUsers: [...this.state.joinedUsers, newUser],
-                numPlayers: ++this.state.numPlayers
-            });
-
-        } catch(err) {
-            console.log('ERR', err);
-        }
+        // } catch(err) {
+        //     console.log('ERR', err);
+        // }
     }
 
     async joinGameFree() {

@@ -35,6 +35,12 @@ let web3Helper = new Promise(function(resolve, reject) {
       resolve(results);
     }
   })
-})
+});
 
 export default web3Helper;
+
+// export {
+//   initWeb3,
+//   managerInstance,
+//   setManagerInstance,
+// };
