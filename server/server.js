@@ -17,6 +17,7 @@ const GAME_HEIGHT = 2000;
 
 let gameStarted = false;
 let gameInProgress = false;
+let gameInVoting = false;
 
 const GAME_TIME = 1000 * 60 * 1; //1 minute
 const WAIT_FOR_VOTES = 1000 * 180; //3 minutes
@@ -46,6 +47,7 @@ io.on('connection', async (socket) => {
                 io.sockets.emit('game-ended', scoreboard);
                 gameStarted = false;
                 gameInProgress = false;
+                gameInProgress = true;
 
                 clearInterval(secondsInterval);
 
@@ -77,6 +79,10 @@ io.on('connection', async (socket) => {
 
         socket.emit('client-enter', res);
 
+    });
+
+    socket.on('in-voting', () => {
+        socket.emit('in-voting', gameInVoting);
     });
 
     if (gameStarted) {
@@ -175,7 +181,7 @@ function createDot() {
 
 function submitVotesInterval() {
     setTimeout(() => {
-        
+
     }, WAIT_FOR_VOTES)
 }
 

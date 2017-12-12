@@ -6,11 +6,10 @@ import Web3 from 'web3'
 import Notifications, {notify} from 'react-notify-toast';
 
 import web3Helper from './web3Helper';
+import socketHelper from './socketHelper';
 
 import gameManager from '../../../solidity/build/contracts/GameManager.json';
 import gameToken from '../../../solidity/build/contracts/GameToken.json';
-
-import io from 'socket.io-client';
 
 const NUM_WEI_PER_TOKEN = 10000000000000;
 const MIN_TOKENS = 1200;
@@ -43,7 +42,7 @@ class Lobby extends Component {
         this.resetGame = this.resetGame.bind(this);
         this.joinGameFree = this.joinGameFree.bind(this);
 
-        this.socket = io('http://localhost:60000');
+        this.socket = socketHelper();
 
         this.socket.on('game-started', () => {
             console.log("Game started");
