@@ -98,7 +98,7 @@ class Lobby extends Component {
 
         try {
             const gameTokenInstance = await gameTokenContract.at("0x6b17c11b0617f2d4fcd8f5f963077c7fca9f3bff");
-            const gameManagerInstance = await gameManagerContract.at("0x386f7db51eb2e7f0bdbec79023616769c9b29936");
+            const gameManagerInstance = await gameManagerContract.at("0x5a082c7e7d01d358a49ddbb9f7407ccf4e452a87");
                             
             this.setState({
                 gameTokenInstance,
@@ -222,8 +222,10 @@ class Lobby extends Component {
                 address: event.args.user,
                 userName: this.state.playersName,
                 numTokens: event.args.numTokens.valueOf(),
-                position: this.state.numPlayers
+                position: this.state.numPlayers - 1
             };
+
+            newUser.position = newUser.position === -1 ? 0 : newUser.position;
 
             localStorage.setItem(newUser.address, JSON.stringify(newUser));
 

@@ -44,6 +44,8 @@ class FinishedGame extends Component {
             });
         });
 
+
+
         this.submitState = this.submitState.bind(this);
         this.parseStateForContract = this.parseStateForContract.bind(this);  
 
@@ -60,8 +62,20 @@ class FinishedGame extends Component {
           gameManagerContract.setProvider(web3.currentProvider);
 
           try {
-            const gameManagerInstance = await gameManagerContract.at("0x386f7db51eb2e7f0bdbec79023616769c9b29936");
+            const gameManagerInstance = await gameManagerContract.at("0x5a082c7e7d01d358a49ddbb9f7407ccf4e452a87");
             
+            gameManagerInstance.GameFinalized((err, res) => {
+                if (err) {
+                    reject(err);
+                }
+    
+                this.setState({
+                    numPlayersVoted: this.state.numPlayersVoted++
+                });
+    
+                resolve(res);
+            });
+
             this.setState({
                 gameManagerInstance,
             });
@@ -94,7 +108,7 @@ class FinishedGame extends Component {
                 // send to server
                 this.socket.emit('voted', user.userName);
 
-                console.log("Vote casted!!", numPlayersVoted);
+                console.log("Vote casted!!");
 
                 this.setState({
                     numPlayersVoted: this.state.numPlayersVoted++

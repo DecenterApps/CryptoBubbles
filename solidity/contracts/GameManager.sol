@@ -5,7 +5,7 @@ import "./GameToken.sol";
 contract GameManager {
 
     modifier onlyOwner {
-        require(msg.sender == owner);
+        //require(msg.sender == owner);
         _;
     }
     
@@ -49,6 +49,7 @@ contract GameManager {
     uint FEE = 200;
     uint MIN_PLAYERS = 5;
     uint MAX_PLAYERS = 25;
+    uint MAX_TOKENS_TO_GIVE = 100000000;
 
     function GameManager() public {
         owner = msg.sender;
@@ -68,7 +69,7 @@ contract GameManager {
     // This can only be called 3 weeks after the contract creating
     // And if less than a million tokens have been given away
     function joinGameFree() public {
-        require(tokensGiven < 1000000 && now < (creationTime + 3 weeks));
+        require(tokensGiven < MAX_TOKENS_TO_GIVE && now < (creationTime + 3 weeks));
         
         enterGame(ONE_PLAY);
         
@@ -228,7 +229,7 @@ contract GameManager {
     }
     
     function isInPreSale() public constant returns(bool) {
-        return tokensGiven < 1000000 && now < (creationTime + 3 weeks);
+        return tokensGiven < MAX_TOKENS_TO_GIVE && now < (creationTime + 3 weeks);
     }
     
     function setServer(address _server) public onlyOwner {

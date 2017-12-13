@@ -27,8 +27,24 @@ const WAIT_FOR_VOTES = 1000 * 180; //3 minutes
 let secondsInGame = 0;
 let secondsInterval;
 
+gameManager.gameFinalized().then(res => {
+    console.log("Game is successfully finished!");
+
+    io.sockets.emit('game-finalized'); 
+});
+
+gameManager.userVoted().then(res => {
+    console.log("User voted! in event", res.args);
+
+});
+
+gameManager.serverNeeded().then(res => {
+    console.log("Game server is needed!");
+
+});
+
 io.on('connection', async (socket) => {
-    console.log('a user connected');
+    console.log('a user connected'); 
 
     socket.on('start-game', async () => {
 
@@ -89,6 +105,7 @@ io.on('connection', async (socket) => {
 
     socket.on('voted', (user) => {
         console.log("User voted!");
+        io.sockets.emit('voted');
         usersWhoVoted.push(user);
     });  
 
