@@ -218,10 +218,11 @@ contract GameManager {
         playersVoted = false;
         callTheServer = false;
         numStateVerified = 0;
-        delete gameBalances;
-
         currPlayerIndex = 0;
-        tokensGiven;
+        
+        currStateHash = 0x0;
+        
+        delete gameBalances;
     }
     
     function setGameToken(address gameTokenAddress) public onlyOwner {

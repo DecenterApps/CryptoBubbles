@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 60000;
 
 const currPlayers = {};
 const dots = {};
-const lobby = [];
+const lobby = []; 
 const scoreboard = {};
 
 const GAME_WIDTH = 2000;
@@ -67,6 +67,8 @@ io.on('connection', async (socket) => {
                 gameInProgress = false;
                 gameInVoting = true;
 
+                console.log(scoreboard);
+
                 clearInterval(secondsInterval);
 
                 submitVotesInterval();
@@ -100,7 +102,7 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('in-voting', () => {
-        socket.emit('in-voting', gameInVoting, usersWhoVoted);
+        socket.emit('in-voting', gameInVoting, usersWhoVoted, scoreboard);
     });
 
     socket.on('voted', (user) => {

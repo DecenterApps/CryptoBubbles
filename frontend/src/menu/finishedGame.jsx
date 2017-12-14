@@ -26,21 +26,24 @@ class FinishedGame extends Component {
             score,
             address: '',
             gameManagerInstance: null,
-            usersWhoVoted: []
+            usersWhoVoted: [],
+            scoreboard: []
         };
 
         console.log(score);
 
         this.socket = socketHelper();
 
-        this.socket.on('in-voting', (inVoting, votes) => {
+        this.socket.on('in-voting', (inVoting, votes, scoreboard) => {
             if(!inVoting) {
                 window.location.href = "/";
             }
 
+
             this.setState({
                 numPlayersVoted: votes.length,
-                usersWhoVoted: votes
+                usersWhoVoted: votes,
+                scoreboard,
             });
         });
 
@@ -62,18 +65,20 @@ class FinishedGame extends Component {
           gameManagerContract.setProvider(web3.currentProvider);
 
           try {
-            const gameManagerInstance = await gameManagerContract.at("0x5a082c7e7d01d358a49ddbb9f7407ccf4e452a87");
+            const gameManagerInstance = await gameManagerContract.at("0x69e036ebbda2efe42cfe29f767b6a6ad670f06b0");
             
-            gameManagerInstance.GameFinalized((err, res) => {
-                if (err) {
-                    reject(err);
-                }
+            gameManagerInstance.Voted((err, res) => {
+                console.log("Voted event", res);
     
                 this.setState({
-                    numPlayersVoted: this.state.numPlayersVoted++
+                    numPlayersVoted: ++this.state.numPlayersVoted
                 });
+            });
+
+            gameManagerInstance.GameFinalized((err, res) => {
+                console.log("Game End", res);
     
-                resolve(res);
+                //switch to index
             });
 
             this.setState({
@@ -100,9 +105,10 @@ class FinishedGame extends Component {
     
           if(user) {
 
-            const state = this.parseStateForContract();
+            const state = Object.values(this.state.scoreboard);
 
             try {
+
                 await this.state.gameManagerInstance.gameEnds(state, JSON.parse(user).position, {from: this.state.address}); 
                 
                 // send to server
@@ -111,7 +117,7 @@ class FinishedGame extends Component {
                 console.log("Vote casted!!");
 
                 this.setState({
-                    numPlayersVoted: this.state.numPlayersVoted++
+                    numPlayersVoted: ++this.state.numPlayersVoted
                 });
 
             } catch(err) {
