@@ -98,7 +98,7 @@ class Lobby extends Component {
 
         try {
             const gameTokenInstance = await gameTokenContract.at("0x6b17c11b0617f2d4fcd8f5f963077c7fca9f3bff");
-            const gameManagerInstance = await gameManagerContract.at("0x69e036ebbda2efe42cfe29f767b6a6ad670f06b0");
+            const gameManagerInstance = await gameManagerContract.at("0xcc79a2b2c22741dcb5188c8e7b6ba613a4f36221");
                             
             this.setState({
                 gameTokenInstance,

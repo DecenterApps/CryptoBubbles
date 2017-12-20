@@ -51,7 +51,10 @@ export default class extends Phaser.State {
   setUpText() {
     const { x, y } = this.player.position;
 
-    this.playerNameText = game.add.text(x, y, this.playerInfo.userName);
+    console.log(this.playerInfo, x, y);
+
+    this.playerNameText = game.add.text(x, y, JSON.parse(this.playerInfo).userName);
+    this.playerNameText.fixedToCamera = true;
     
     this.scoreText = game.add.text(window.innerWidth - 200, 50, "Score: 0");
     this.scoreText.fixedToCamera = true;
@@ -231,8 +234,8 @@ export default class extends Phaser.State {
 
     this.followMouse();
 
-    this.playerNameText.x = Math.floor(this.player.x + this.player.width / 2);
-    this.playerNameText.y = Math.floor(this.player.y + this.player.height / 2);
+    this.playerNameText.x = this.player.body.x;
+    this.playerNameText.y = this.player.body.y;
   }
 
   randomIntFromInterval(min,max) {

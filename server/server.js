@@ -11,7 +11,6 @@ const currPlayers = {};
 const dots = {};
 const lobby = []; 
 const scoreboard = {};
-
 const GAME_WIDTH = 2000;
 const GAME_HEIGHT = 2000;
 
@@ -30,7 +29,7 @@ let secondsInterval;
 gameManager.gameFinalized().then(res => {
     console.log("Game is successfully finished!");
 
-    io.sockets.emit('game-finalized'); 
+    io.sockets.emit('game-finalized');
 });
 
 gameManager.userVoted().then(res => {
