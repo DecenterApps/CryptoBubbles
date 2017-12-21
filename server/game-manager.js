@@ -1,11 +1,11 @@
 const Web3 = require('web3');
 
-const web3 = new Web3(new Web3.providers.HttpProvider("https://kovan.infura.io"));
+const web3 = new Web3(new Web3.providers.HttpProvider("https://kovan.decenter.com"));
 
 const gameManagerAbi = require('../solidity/build/contracts/GameManager');
 
 const gameManager = web3.eth.contract(gameManagerAbi.abi)
-.at('0xcc79a2b2c22741dcb5188c8e7b6ba613a4f36221');
+.at('0x35c11b5b9626534163e20664b88dd2d0d9a710e8');
 
 async function hasGameStarted() {
     try {
@@ -61,9 +61,24 @@ function userVoted() {
     });
 }
 
+function userJoined() {
+    return new Promise((resolve, reject) => {
+        
+        gameManager.GameJoined((err, res) => {
+            if (err) {
+                reject(err);
+            }
+
+            resolve(res);
+        });
+
+    });
+}
+
 module.exports = {
     hasGameStarted,
     gameFinalized,
     serverNeeded,
     userVoted,
+    userJoined,
 };

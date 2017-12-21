@@ -49,18 +49,21 @@ export default class extends Phaser.State {
   }
 
   setUpText() {
-    const { x, y } = this.player.position;
-
-    console.log(this.playerInfo, x, y);
-
-    this.playerNameText = game.add.text(x, y, JSON.parse(this.playerInfo).userName);
-    this.playerNameText.fixedToCamera = true;
-    
     this.scoreText = game.add.text(window.innerWidth - 200, 50, "Score: 0");
     this.scoreText.fixedToCamera = true;
 
     this.timerText = game.add.text(30, 50, "Time left: 60");
     this.timerText.fixedToCamera = true;
+  }
+
+  playerText(currPlayer) {
+    const style = { font: "14px Arial", fill: "#ffffff", wordWrap: true, wordWrapWidth: currPlayer.width, align: "center", stroke: '#000000', strokeThickness: 4 };
+    const { x, y } = this.spriteCeneter(currPlayer);
+
+    this.playerNameText = game.add.text(x, y, currPlayer.name, style);
+    this.playerNameText.anchor.set(0.5);
+
+    currPlayer.nameText = this.playerNameText;
   }
 
   showTimer() {
@@ -74,13 +77,19 @@ export default class extends Phaser.State {
     const currPlayer = this.game.add.sprite(pos.x, pos.y, 'decenter');
     
     this.game.physics.arcade.enable(currPlayer);
-    currPlayer.body.setCircle(22);
     this.playersGroup.add(currPlayer);
+    currPlayer.anchor.set(0.5, 0.5);
+
+    const radius = currPlayer.width / 2;
+
+    currPlayer.body.setCircle(radius);
 
     currPlayer.address = address;
     currPlayer.name = name;
 
     this.players[address] = currPlayer;
+
+    this.playerText(currPlayer);
 
     return currPlayer;
   }
@@ -95,8 +104,12 @@ export default class extends Phaser.State {
 
   addDot(pos) {
     const dot = this.game.add.sprite(pos.x, pos.y, 'dot');
-    this.game.physics.arcade.enable(dot);  
-    dot.body.setCircle(5);
+    this.game.physics.arcade.enable(dot);
+
+    const radius = dot.width / 2;
+
+    dot.body.setCircle(radius);
+
     this.dotGroup.add(dot);
     this.dots[pos.x + " " + pos.y] = dot;
 
@@ -182,8 +195,15 @@ export default class extends Phaser.State {
 
     this.socket.on('player-move', (pos, address) => {
       if(this.players[address]) {
-        this.players[address].x = pos.x;
-        this.players[address].y = pos.y;
+        const currPlayer = this.players[address];
+
+        currPlayer.x = pos.x;
+        currPlayer.y = pos.y;
+
+        const { x, y } = this.spriteCeneter(currPlayer);
+
+        currPlayer.nameText.x = x;
+        currPlayer.nameText.y = y;
       }
     });
 
@@ -234,8 +254,19 @@ export default class extends Phaser.State {
 
     this.followMouse();
 
-    this.playerNameText.x = this.player.body.x;
-    this.playerNameText.y = this.player.body.y;
+    const { x, y } = this.spriteCeneter(this.player);
+
+    this.playerNameText.x = x;
+    this.playerNameText.y = y;
+  }
+
+  // Helper functions
+
+  spriteCeneter(sprite) {
+    const x = Math.floor(sprite.x);
+    const y = Math.floor(sprite.y + (sprite.height / 3));
+
+    return { x, y };
   }
 
   randomIntFromInterval(min,max) {

@@ -5,7 +5,7 @@ import "./GameToken.sol";
 contract GameManager {
 
     modifier onlyOwner {
-        //require(msg.sender == owner);
+        require(msg.sender == owner);
         _;
     }
     
@@ -16,7 +16,7 @@ contract GameManager {
     
     event GameJoined(address indexed user, uint numTokens, uint playerPos);
     event GameFinalized(address user, uint numPlayers);
-    event Voted(address user, bytes32 stateHash);
+    event Voted(address user, bytes32 currStateHash, bytes32 newStateHash, uint currPlayer, uint numVoted);
     event ServerNeeded();
 
     uint32[] public gameBalances; //TODO: take care of overflows
@@ -125,12 +125,13 @@ contract GameManager {
         // The person who votes, must be one of the players
         require(usersInGame[msg.sender] == true);
 
+        // TODO: figure out how to reset this check on game end
         // A player can vote only once
-        require(hasVoted[msg.sender] == false);
+        //require(hasVoted[msg.sender] == false);
         
         bytes32 stateHash = keccak256(state);
 
-        Voted(msg.sender, stateHash);
+        Voted(msg.sender, currStateHash, stateHash, currPlayerIndex, numStateVerified);
         
         // we remove the user from game, so he can join in the next one
         usersInGame[msg.sender] = false;
@@ -138,6 +139,7 @@ contract GameManager {
         if (currStateHash == 0x0) {
             currStateHash = stateHash;
             submitStateStartTime = now;
+            numStateVerified++;
             return;
         } 
         
@@ -200,6 +202,7 @@ contract GameManager {
         
         for(uint i = 0; i < currPlayerIndex; ++i) {
             balances[userPosition[i]] += state[i];
+            usersInGame[userPosition[i]] = false;
         }
         
         GameFinalized(msg.sender, currPlayerIndex);
@@ -219,6 +222,7 @@ contract GameManager {
         callTheServer = false;
         numStateVerified = 0;
         currPlayerIndex = 0;
+        tokensGiven = 0;
         
         currStateHash = 0x0;
         
@@ -252,13 +256,14 @@ contract GameManager {
     }
     
     function resetGame() public onlyOwner {
-        newGameSession();
         
         usersInGame[msg.sender] = false;
         
         for(uint i = 0; i < currPlayerIndex; ++i) {
             usersInGame[userPosition[i]] = false;
         }
+        
+        newGameSession();
     }
 
     function startGame() public onlyOwner {

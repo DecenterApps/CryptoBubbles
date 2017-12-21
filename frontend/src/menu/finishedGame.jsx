@@ -65,7 +65,7 @@ class FinishedGame extends Component {
           gameManagerContract.setProvider(web3.currentProvider);
 
           try {
-            const gameManagerInstance = await gameManagerContract.at("0xcc79a2b2c22741dcb5188c8e7b6ba613a4f36221");
+            const gameManagerInstance = await gameManagerContract.at("0x35c11b5b9626534163e20664b88dd2d0d9a710e8");
             
             gameManagerInstance.Voted((err, res) => {
                 console.log("Voted event", res);

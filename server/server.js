@@ -27,7 +27,7 @@ let secondsInGame = 0;
 let secondsInterval;
 
 gameManager.gameFinalized().then(res => {
-    console.log("Game is successfully finished!");
+    console.log("Game is successfully finished!", res.args);
 
     io.sockets.emit('game-finalized');
 });
@@ -39,7 +39,10 @@ gameManager.userVoted().then(res => {
 
 gameManager.serverNeeded().then(res => {
     console.log("Game server is needed!");
+});
 
+gameManager.userJoined().then(res => {
+    console.log("User has joined", res.args);
 });
 
 io.on('connection', async (socket) => {
@@ -47,7 +50,7 @@ io.on('connection', async (socket) => {
 
     socket.on('start-game', async () => {
 
-        const gameHasStarted = await gameManager.hasGameStarted();
+        const gameHasStarted = true;// await gameManager.hasGameStarted();
 
         console.log("Game started on contract?", gameHasStarted);
  
