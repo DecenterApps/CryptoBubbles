@@ -38,12 +38,19 @@ gameManager.userVoted().then(res => {
 });
 
 gameManager.serverNeeded().then(res => {
-    console.log("Game server is needed!");
+    console.log("Game server is needed!", res.args);
 });
 
 gameManager.userJoined().then(res => {
     console.log("User has joined", res.args);
 });
+
+(async () => {
+    const res = await gameManager.hasGameStarted();
+
+    console.log(res);
+})();
+
 
 io.on('connection', async (socket) => {
     console.log('a user connected'); 
