@@ -23,6 +23,7 @@ class FinishedGame extends Component {
         this.state = {
             web3: null,
             numPlayersVoted: 0,
+            pointsWon: 0,
             score,
             address: '',
             gameManagerInstance: null,
@@ -65,8 +66,10 @@ class FinishedGame extends Component {
           gameManagerContract.setProvider(web3.currentProvider);
 
           try {
-            const gameManagerInstance = await gameManagerContract.at("0x35c11b5b9626534163e20664b88dd2d0d9a710e8");
+            const gameManagerInstance = await gameManagerContract.at("0x73d48477eb4070316eb2209327f21b1774245e3a");
             
+            const pointsWon = this.state.score.find(user => user.address === web3.eth.accounts[0]);
+
             gameManagerInstance.Voted((err, res) => {
                 console.log("Voted event", res);
     
@@ -153,7 +156,7 @@ class FinishedGame extends Component {
             </div>
             <div className="col-md-6 col-xs-6 follow line" align="center">
                 <h3>
-                     1000 BT<br/> <span>Tokens for entry</span>
+                     { this.state.tokensWon } BT<br/> <span>Tokens you won!</span>
                 </h3>
             </div>
 

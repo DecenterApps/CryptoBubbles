@@ -12,6 +12,8 @@ let playersSpeed = 300;
 const GAME_WIDTH = 2000;
 const GAME_HEIGHT = 2000;
 
+let isForked = false;
+
 export default class extends Phaser.State {
 
   create () {
@@ -36,6 +38,10 @@ export default class extends Phaser.State {
     this.player = this.addPlayer(this.generatePlayerPos(), this.playerAddr, this.playerInfo.userName);
     game.camera.follow(this.player);
 
+    this.spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+
+    game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR ]);
+
     this.setUpText();
 
     this.socket = socketHelper.socket;
@@ -59,6 +65,8 @@ export default class extends Phaser.State {
   playerText(currPlayer) {
     const style = { font: "14px Arial", fill: "#ffffff", wordWrap: true, wordWrapWidth: currPlayer.width, align: "center", stroke: '#000000', strokeThickness: 4 };
     const { x, y } = this.spriteCeneter(currPlayer);
+
+    console.log(currPlayer.name);
 
     this.playerNameText = game.add.text(x, y, currPlayer.name, style);
     this.playerNameText.anchor.set(0.5);
@@ -87,6 +95,8 @@ export default class extends Phaser.State {
     currPlayer.address = address;
     currPlayer.name = name;
 
+    console.log(name);
+
     this.players[address] = currPlayer;
 
     this.playerText(currPlayer);
@@ -97,6 +107,10 @@ export default class extends Phaser.State {
   followMouse() {
     if (this.game.physics.arcade.distanceToPointer(this.player, this.game.input.activePointer) > 8) {
         this.game.physics.arcade.moveToPointer(this.player, playersSpeed);
+
+        if (isForked) {
+          //this.player.fork.body.moveTo(this.player.x, this.player.y);
+        }
     } else {
         this.player.body.velocity.set(0);
     }
@@ -258,6 +272,27 @@ export default class extends Phaser.State {
 
     this.playerNameText.x = x;
     this.playerNameText.y = y;
+
+    if (this.spaceKey.isDown && !isForked) {
+      console.log("Fork!");
+      this.forkPlayer(this.player);
+      isForked = true;
+    }
+  }
+
+  forkPlayer(player) {
+    const currPlayer = this.game.add.sprite(player.x - 30, player.y - 30, 'decenter');
+    
+    this.game.physics.arcade.enable(currPlayer);
+    this.playersGroup.add(currPlayer);
+    currPlayer.anchor.set(0.5, 0.5);
+
+    const radius = currPlayer.width / 2;
+
+    currPlayer.body.setCircle(radius);
+
+    player.fork = currPlayer;
+
   }
 
   // Helper functions

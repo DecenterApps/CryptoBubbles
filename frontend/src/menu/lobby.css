@@ -200,3 +200,7 @@ h1{
 .joined-users-list li {
 
 }
+
+.loading-text {
+    color: black;
+}

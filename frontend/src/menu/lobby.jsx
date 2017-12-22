@@ -14,6 +14,8 @@ import gameToken from '../../../solidity/build/contracts/GameToken.json';
 const NUM_WEI_PER_TOKEN = 10000000000000;
 const MIN_TOKENS = 1200;
 
+import LoadingGif from './loading.gif';
+
 class Lobby extends Component {
 
     constructor(props) {
@@ -32,7 +34,10 @@ class Lobby extends Component {
             isAdmin: false,
             playersName: '',
             isPreSale: true,
-            gameInProgress: false
+            gameInProgress: false,
+            alreadyJoined: false,
+            isLoading: false,
+            loadingText: 'Please wait while the transaction is being mined'
         };
 
         this.joinGame = this.joinGame.bind(this);
@@ -51,7 +56,12 @@ class Lobby extends Component {
         });
 
         this.socket.on('load-users', (users, gameInProgress) => {
-            console.log(gameInProgress);
+            const currUser = users.find(u => u.address === this.state.address);
+
+            if (currUser) {
+                this.setState({ alreadyJoined: true, playersName: currUser.userName });
+            }
+
             this.setState({ joinedUsers: users, gameInProgress });
         });
 
@@ -60,6 +70,13 @@ class Lobby extends Component {
                 joinedUsers: [...this.state.joinedUsers, user],
                 numPlayers: ++this.state.numPlayers
             });
+        });
+
+        this.socket.on('game-starting', () => {
+            this.setState({
+                isLoading: true,
+                loadingText: 'Prepare for battle the game is about to start...'
+            })
         });
 
         // How many seconds of the game has passed (show in UI while people are waiting)
@@ -77,7 +94,8 @@ class Lobby extends Component {
           });
 
           this.setState({
-              isAdmin: web3.eth.accounts[0] === "0x93cdb0a93fc36f6a53ed21ecf6305ab80d06beca"
+              isAdmin: web3.eth.accounts[0] === "0x93cdb0a93fc36f6a53ed21ecf6305ab80d06beca",
+              address: web3.eth.accounts[0]
           });
 
           this.socket.emit('get-users', web3.eth.accounts[0]);
@@ -98,7 +116,7 @@ class Lobby extends Component {
 
         try {
             const gameTokenInstance = await gameTokenContract.at("0x6b17c11b0617f2d4fcd8f5f963077c7fca9f3bff");
-            const gameManagerInstance = await gameManagerContract.at("0x35c11b5b9626534163e20664b88dd2d0d9a710e8");
+            const gameManagerInstance = await gameManagerContract.at("0x73d48477eb4070316eb2209327f21b1774245e3a");
                             
             this.setState({
                 gameTokenInstance,
@@ -153,6 +171,9 @@ class Lobby extends Component {
 
     async manualStart() {
         try {
+
+            this.socket.emit('game-starting');
+
             await this.state.gameManagerInstance.startGame({from: web3.eth.accounts[0]});
 
             console.log("Starting game...");
@@ -170,6 +191,10 @@ class Lobby extends Component {
             await this.state.gameManagerInstance.resetGame({from: web3.eth.accounts[0]});
 
             console.log("reset");
+
+            this.socket.emit('reset');
+
+            window.location.href = '/';
 
         } catch(err) {
             console.log(err);
@@ -214,6 +239,10 @@ class Lobby extends Component {
 
         try {
 
+            this.setState({
+               isLoading: true 
+            });
+
             const res = await managerInstance.joinGameFree({from: web3.eth.accounts[0]});
 
             const event = res.logs[0];
@@ -233,7 +262,8 @@ class Lobby extends Component {
                 tokensSubmited: 0,
                 joinedUsers: [...this.state.joinedUsers, newUser],
                 numPlayers: ++this.state.numPlayers,
-                playersName: ''
+                alreadyJoined: true,
+                isLoading: false
             });
 
         } catch(err) {
@@ -254,6 +284,7 @@ class Lobby extends Component {
     render() {
         return (
             <div className="row login_box">
+
             <div className="title-wrapper line">
                 {
                     this.state.gameInProgress &&
@@ -281,14 +312,30 @@ class Lobby extends Component {
             </div>
 
             <div className="login_control">
+                { this.state.isLoading && 
+                    <div>
+                        <img src={ LoadingGif } width='60' height='60' />
+                        <div className="loading-text">{ this.state.loadingText }</div>
+                    </div>
+                }
                     
                     <div className="control">
                         <div className="label">Username</div>
-                        <input type="text" placeholder="Username" name="playersName" value={ this.state.playersName } onChange={ this.onInputChange } className="form-control"/>
+                        <input 
+                            type="text" 
+                            placeholder="Username" 
+                            name="playersName"
+                            value={ this.state.playersName } 
+                            onChange={ this.onInputChange } 
+                            disabled={ this.state.alreadyJoined }
+                            className="form-control"
+                        />
                     </div>
                     
                     <div align="center">
-                         <button className="btn btn-orange" onClick={ this.joinGameFree }>Join Game</button>
+                         <button className="btn btn-orange" onClick={ this.joinGameFree } disabled={ this.state.alreadyJoined }>
+                            { this.state.alreadyJoined ? 'Game Joined!' : 'Join Game'}
+                         </button>
                     </div>
 
                     <div>
