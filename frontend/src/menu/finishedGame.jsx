@@ -6,6 +6,8 @@ import socketHelper from './socketHelper';
 
 import gameManager from '../../../solidity/build/contracts/GameManager.json';
 
+import './finishedGame.css';
+
 class FinishedGame extends Component {
 
     constructor(props) {
@@ -28,7 +30,10 @@ class FinishedGame extends Component {
             address: '',
             gameManagerInstance: null,
             usersWhoVoted: [],
-            scoreboard: []
+            scoreboard: [],
+            tokensWon: 0,
+            gameFinalized: false,
+            btnText: 'Unlock tokens!'
         };
 
         console.log(score);
@@ -48,10 +53,33 @@ class FinishedGame extends Component {
             });
         });
 
+        this.socket.on('load-votes', (votes) => {
+            console.log('Load votes', votes);
+            this.setState({
+                numPlayersVoted: votes.length,
+                usersWhoVoted: votes
+            });
+        });
 
+        this.socket.on('voted', () => {
+            this.setState({
+                numPlayersVoted: ++this.state.numPlayersVoted
+            });
+        });
+
+        this.socket.on('game-finalized', () => {
+            console.log("Yay! Game finished!");
+
+            this.setState({
+               gameFinalized: true,
+               btnText: 'Play Again!'
+            });
+        });
 
         this.submitState = this.submitState.bind(this);
         this.parseStateForContract = this.parseStateForContract.bind(this);  
+
+        this.socket.emit('load-votes');
 
     }
 
@@ -68,10 +96,16 @@ class FinishedGame extends Component {
           try {
             const gameManagerInstance = await gameManagerContract.at("0x73d48477eb4070316eb2209327f21b1774245e3a");
             
-            const pointsWon = this.state.score.find(user => user.address === web3.eth.accounts[0]);
+            const currUser = this.state.score.find(user => user.address === web3.eth.accounts[0]);
+
+            if (currUser) {
+                this.setState({
+                    tokensWon: currUser.score
+                });
+            }
 
             gameManagerInstance.Voted((err, res) => {
-                console.log("Voted event", res);
+                console.log("Voted event", res.args);
     
                 this.setState({
                     numPlayersVoted: ++this.state.numPlayersVoted
@@ -101,7 +135,12 @@ class FinishedGame extends Component {
     }
 
     async submitState() {
-        console.log("Submit state called");
+        
+        if (this.state.gameFinalized) {
+            window.location.href = "/";
+            return;
+        }
+
         try {
     
           const user = localStorage.getItem(this.state.address);
@@ -115,13 +154,7 @@ class FinishedGame extends Component {
                 await this.state.gameManagerInstance.gameEnds(state, JSON.parse(user).position, {from: this.state.address}); 
                 
                 // send to server
-                this.socket.emit('voted', user.userName);
-
-                console.log("Vote casted!!");
-
-                this.setState({
-                    numPlayersVoted: ++this.state.numPlayersVoted
-                });
+                this.socket.emit('voted', JSON.parse(user));
 
             } catch(err) {
                 console.log(err);
@@ -146,7 +179,9 @@ class FinishedGame extends Component {
             <div className="row login_box">
             <div className="col-md-12 col-xs-12" align="center">
                 <div className="line">
-                    <h3>Game is Done!</h3>
+                    { this.state.gameFinalized ? 
+                    <h3>Game is Done!</h3> : <h3>Game is Finalized!</h3>
+                    }
                 </div>
             </div>
             <div className="col-md-6 col-xs-6 follow line" align="center">
@@ -163,11 +198,19 @@ class FinishedGame extends Component {
             <div className="col-md-12 col-xs-12" align="center">
                 
             </div>
+
+            { !this.state.gameFinalized && <div>
+                * In order for a game to be finalized and the tokens  <br /> 
+                you won to be released, you MUST unlock the tokens by clicking <br />
+                the button below. Users that don't finalize the state will lose their <br />
+                tokens and will be banned from future games.
+            </div>
+            }
             
             <div className="col-md-12 col-xs-12 login_control">
                     
                     <div align="center">
-                         <button className="btn btn-orange" onClick={ this.submitState }>Finalize Game</button>
+                         <button className="btn btn-orange" onClick={ this.submitState }>{ this.state.btnText }</button>
                     </div>
                     
             </div>

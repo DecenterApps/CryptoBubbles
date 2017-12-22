@@ -37,7 +37,8 @@ class Lobby extends Component {
             gameInProgress: false,
             alreadyJoined: false,
             isLoading: false,
-            loadingText: 'Please wait while the transaction is being mined'
+            loadingText: 'Please wait while the transaction is being mined',
+            inputError: ''
         };
 
         this.joinGame = this.joinGame.bind(this);
@@ -237,10 +238,28 @@ class Lobby extends Component {
 
         const managerInstance = this.state.gameManagerInstance;
 
+        let inputErr = 'You must enter a username!';
+
+        if (this.state.playersName === '') {
+            this.setState({
+                inputError
+            });
+
+            return;
+        }
+
+        if (this.state.playersName.length > 15) {
+            this.setState({
+                inputError: 'A username must be shorter than 15 letters'
+            });
+
+            return;
+        }
+
         try {
 
             this.setState({
-               isLoading: true 
+               isLoading: true
             });
 
             const res = await managerInstance.joinGameFree({from: web3.eth.accounts[0]});
@@ -295,8 +314,7 @@ class Lobby extends Component {
                     <h3>Crypto Bubbles</h3>
                 }
                 {/* <div className="outter"><img src="https://www.ethereum.org/images/logos/ETHEREUM-ICON_Black_small.png" className="image-circle"/></div>    */}
-                {/* <h2>CryptoBubbles</h2>
-                <span>Game time 10 minutes</span> */}
+                <div> - You currently own { this.state.tokenBalance } BT - </div>
             </div>
             <div>
                 <div className="col-md-6 col-xs-6 follow line" align="center">
@@ -320,7 +338,7 @@ class Lobby extends Component {
                 }
                     
                     <div className="control">
-                        <div className="label">Username</div>
+                        <div className="label">{ this.state.inputError }</div>
                         <input 
                             type="text" 
                             placeholder="Username" 
