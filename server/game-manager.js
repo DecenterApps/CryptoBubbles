@@ -2,7 +2,7 @@ const Web3 = require('web3');
 
 require('dotenv').config();
 
-const web3 = new Web3(new Web3.providers.HttpProvider("https://kovan.decenter.com"));
+const web3 = new Web3(new Web3.providers.HttpProvider("https://ropsten.decenter.com"));
 
 const privateKey = Buffer.from(process.env.SERVER_PRIV_KEY, 'hex');
 const ourAddress = process.env.SERVER_ADDRESS;
@@ -33,20 +33,12 @@ async function serverJudgement(state) {
     }
 }
 
-function gameFinalized() {
-    return new Promise((resolve, reject) => {
-
+function gameFinalized(callback) {
         gameManager.GameFinalized((err, res) => {
-            if (err) {
-                reject(err);
-            }
-
             console.log(err, "fin");
 
-            resolve(res);
+            callback(res);
         });
-
-    });
 }
 
 function serverNeeded() {

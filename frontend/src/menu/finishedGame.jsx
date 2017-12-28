@@ -57,29 +57,10 @@ class FinishedGame extends Component {
         this.socket.on('load-votes', (votes) => {
             console.log('Load votes', votes);
 
-            const youFoundMe = votes.find(v => v.address === this.state.address);
-
-            console.log(youFoundMe);
-
-            let hasVoted = youFoundMe ? true : false;
-
-            console.log(hasVoted);
-
             this.setState({
                 numPlayersVoted: votes.length,
                 usersWhoVoted: votes,
-                hasVoted
-            });
-        });
-
-        this.socket.on('voted', (user) => {
-
-            if (user.address === this.state.address) {
-                this.setState({ hasVoted: true });
-            }
-
-            this.setState({
-                numPlayersVoted: ++this.state.numPlayersVoted
+                hasVoted: this.userVoted(votes)
             });
         });
 
@@ -95,8 +76,6 @@ class FinishedGame extends Component {
         this.submitState = this.submitState.bind(this);
         this.parseStateForContract = this.parseStateForContract.bind(this);  
 
-        this.socket.emit('load-votes');
-
     }
 
     async componentWillMount() {
@@ -110,7 +89,7 @@ class FinishedGame extends Component {
           gameManagerContract.setProvider(web3.currentProvider);
 
           try {
-            const gameManagerInstance = await gameManagerContract.at("0x73d48477eb4070316eb2209327f21b1774245e3a");
+            const gameManagerInstance = await gameManagerContract.at("0xb859feb83f45977ada8f61b14f8e12696745b2ae");
             
             const currUser = this.state.score.find(user => user.address === web3.eth.accounts[0]);
 
@@ -123,9 +102,11 @@ class FinishedGame extends Component {
             gameManagerInstance.Voted((err, res) => {
                 console.log("Voted event", res.args);
     
-                this.setState({
-                    numPlayersVoted: ++this.state.numPlayersVoted
-                });
+                if (!this.userVoted()) {
+                    this.setState({
+                        numPlayersVoted: ++this.state.numPlayersVoted
+                    });
+                }
             });
 
             gameManagerInstance.GameFinalized((err, res) => {
@@ -137,6 +118,8 @@ class FinishedGame extends Component {
             this.setState({
                 gameManagerInstance,
             });
+
+            this.socket.emit('load-votes');
             
           } catch(err) {
               console.log(err);
@@ -188,6 +171,13 @@ class FinishedGame extends Component {
 
     parseStateForContract() {
         return this.state.score.map(s => s.score);
+    }
+
+    userVoted(newVotes) {
+        const votes = newVotes || this.state.usersWhoVoted;
+        const youFoundMe = votes.find(v => v.address === this.state.address);
+
+        return youFoundMe ? true : false;
     }
 
     render() {

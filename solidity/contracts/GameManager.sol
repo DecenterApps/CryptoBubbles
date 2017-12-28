@@ -42,7 +42,8 @@ contract GameManager {
     uint public creationTime;
     address public server;
     
-    uint submitStateStartTime;
+    uint public submitStateStartTime;
+    uint public numGamesPlayed;
 
     uint REWARD_FOR_FINALIZE = 2000; // 2000 GT
     uint VOTE_PERIOD = 5 minutes;
@@ -207,6 +208,8 @@ contract GameManager {
             usersInGame[userPosition[i]] = false;
         }
         
+        numGamesPlayed++;
+        
         GameFinalized(msg.sender, currPlayerIndex);
 
         newGameSession();
@@ -273,7 +276,7 @@ contract GameManager {
         GameStarted(msg.sender, currPlayerIndex, now);
     }
     
-    function serverNeededEvent() public {
+    function serverNeededEvent() public  {
         ServerNeeded();
     }
     

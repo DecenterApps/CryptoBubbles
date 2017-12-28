@@ -66,7 +66,7 @@ export default class extends Phaser.State {
 
   playerText(currPlayer) {
     const style = { font: "14px Arial", fill: "#ffffff", wordWrap: true, wordWrapWidth: currPlayer.width, align: "center", stroke: '#000000', strokeThickness: 4 };
-    const { x, y } = this.spriteCeneter(currPlayer);
+    const { x, y } = this.spriteCenter(currPlayer);
 
     console.log(currPlayer.name);
 
@@ -216,7 +216,7 @@ export default class extends Phaser.State {
         currPlayer.x = pos.x;
         currPlayer.y = pos.y;
 
-        const { x, y } = this.spriteCeneter(currPlayer);
+        const { x, y } = this.spriteCenter(currPlayer);
 
         currPlayer.nameText.x = x;
         currPlayer.nameText.y = y;
@@ -270,7 +270,7 @@ export default class extends Phaser.State {
 
     this.followMouse();
 
-    const { x, y } = this.spriteCeneter(this.player);
+    const { x, y } = this.spriteCenter(this.player);
 
     this.playerNameText.x = x;
     this.playerNameText.y = y;
@@ -299,7 +299,7 @@ export default class extends Phaser.State {
 
   // Helper functions
 
-  spriteCeneter(sprite) {
+  spriteCenter(sprite) {
     const x = Math.floor(sprite.x);
     const y = Math.floor(sprite.y + (sprite.height / 3));
 
