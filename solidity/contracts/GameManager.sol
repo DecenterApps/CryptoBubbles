@@ -15,6 +15,7 @@ contract GameManager {
     }
     
     event GameJoined(address indexed user, uint numTokens, uint playerPos);
+    event GameStarted(address byWhom, uint numPlayers, uint timestamp);
     event GameFinalized(address user, uint numPlayers);
     event Voted(address user, bytes32 currStateHash, bytes32 newStateHash, uint currPlayer, uint numVoted);
     event ServerNeeded();
@@ -112,6 +113,7 @@ contract GameManager {
         // trigger game start if we reached the required num. of players
         if (currPlayerIndex >= MIN_PLAYERS) {
             gameInProgress = true;
+            GameStarted(msg.sender, currPlayerIndex, now);
         }
         
         GameJoined(msg.sender, numTokens, currPlayerIndex);   
@@ -268,6 +270,19 @@ contract GameManager {
 
     function startGame() public onlyOwner {
         gameInProgress = true;
+        GameStarted(msg.sender, currPlayerIndex, now);
+    }
+    
+    function serverNeededEvent() public {
+        ServerNeeded();
+    }
+    
+    function gameJoinedEvent() public {
+        GameJoined(msg.sender, 1000, 1);
+    }
+    
+    function gameStartedEvent() public {
+        GameStarted(msg.sender, currPlayerIndex, now);
     }
     
 }

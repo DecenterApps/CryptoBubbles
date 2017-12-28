@@ -12,7 +12,7 @@ const gameManagerAbi = require('../solidity/build/contracts/GameManager');
 const gameManager = web3.eth.contract(gameManagerAbi.abi).at(process.env.CONTRACT_ADDRESS);
 
 let nonce = web3.eth.getTransactionCount(ourAddress);
-const gasPrice = 5202509001; // Magic
+const gasPrice = 102509001; // Magic
 
 async function hasGameStarted() {
     try {

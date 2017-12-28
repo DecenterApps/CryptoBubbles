@@ -34,8 +34,10 @@ export default class extends Phaser.State {
     this.dotGroup = this.game.add.group();
     this.playersGroup = this.game.add.group();
 
+    console.log('Username from local: ' + this.playerInfo);
+
     // add the current player to the game
-    this.player = this.addPlayer(this.generatePlayerPos(), this.playerAddr, this.playerInfo.userName);
+    this.player = this.addPlayer(this.generatePlayerPos(), this.playerAddr, JSON.parse(this.playerInfo).userName);
     game.camera.follow(this.player);
 
     this.spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);

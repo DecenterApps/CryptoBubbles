@@ -7,10 +7,10 @@ const gameManager = require('./game-manager');
 
 const PORT = process.env.PORT || 60000;
 
-const currPlayers = {};
-const dots = {};
-const lobby = []; 
-const scoreboard = {};
+let currPlayers = {};
+let dots = {};
+let lobby = []; 
+let scoreboard = {};
 const GAME_WIDTH = 2000;
 const GAME_HEIGHT = 2000;
 
@@ -30,11 +30,12 @@ gameManager.gameFinalized().then(res => {
     console.log("Game is successfully finished!", res.args);
 
     io.sockets.emit('game-finalized');
+
+    clearGame();
 });
 
 gameManager.userVoted().then(res => {
     console.log("User voted! in event", res.args);
-
 });
 
 gameManager.serverNeeded().then(res => {
@@ -97,6 +98,14 @@ io.on('connection', async (socket) => {
         socket.broadcast.emit('add-user', user);
     });
 
+    socket.on('game-starting', () => {
+        io.sockets.emit('game-starting');
+    });
+
+    socket.on('reset', () => {
+        clearGame();
+    });
+
     socket.on('can-enter', (addr) => {
         const foundUser = lobby.find(u => u.address === addr);
 
@@ -116,9 +125,13 @@ io.on('connection', async (socket) => {
 
     socket.on('voted', (user) => {
         console.log("User voted!");
-        io.sockets.emit('voted');
+        io.sockets.emit('voted', user);
         usersWhoVoted.push(user);
-    });  
+    });
+
+    socket.on('load-votes', () => {
+        io.sockets.emit('load-votes', usersWhoVoted);
+    });
 
     if (gameStarted) {
 
@@ -172,6 +185,20 @@ http.listen(PORT, () => {
   console.log('listening on *:60000');
 });
 
+function clearGame() {
+    currPlayers = {};
+    dots = {};
+    lobby = []; 
+    scoreboard = {};
+    
+    gameStarted = false;
+    gameInProgress = false;
+    gameInVoting = false;
+    
+    usersWhoVoted = [];
+    
+    secondsInGame = 0;
+}
 
 function nameAlreadyExists(name) {
     const foundUser = lobby.find(user => user.userName === name);

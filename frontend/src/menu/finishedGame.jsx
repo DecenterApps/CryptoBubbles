@@ -32,6 +32,7 @@ class FinishedGame extends Component {
             usersWhoVoted: [],
             scoreboard: [],
             tokensWon: 0,
+            hasVoted: false,
             gameFinalized: false,
             btnText: 'Unlock tokens!'
         };
@@ -55,13 +56,28 @@ class FinishedGame extends Component {
 
         this.socket.on('load-votes', (votes) => {
             console.log('Load votes', votes);
+
+            const youFoundMe = votes.find(v => v.address === this.state.address);
+
+            console.log(youFoundMe);
+
+            let hasVoted = youFoundMe ? true : false;
+
+            console.log(hasVoted);
+
             this.setState({
                 numPlayersVoted: votes.length,
-                usersWhoVoted: votes
+                usersWhoVoted: votes,
+                hasVoted
             });
         });
 
-        this.socket.on('voted', () => {
+        this.socket.on('voted', (user) => {
+
+            if (user.address === this.state.address) {
+                this.setState({ hasVoted: true });
+            }
+
             this.setState({
                 numPlayersVoted: ++this.state.numPlayersVoted
             });
@@ -207,13 +223,13 @@ class FinishedGame extends Component {
             </div>
             }
             
-            <div className="col-md-12 col-xs-12 login_control">
-                    
+            { !this.state.hasVoted &&
+                <div className="col-md-12 col-xs-12 login_control">
                     <div align="center">
-                         <button className="btn btn-orange" onClick={ this.submitState }>{ this.state.btnText }</button>
+                        <button className="btn btn-orange" onClick={ this.submitState }>{ this.state.btnText }</button>
                     </div>
-                    
-            </div>
+                </div>
+            }
 
             {
                 this.state.usersWhoVoted.length > 0 &&

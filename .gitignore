@@ -5,3 +5,5 @@ server/node_modules
 node_modules
 .DS_STORE
 .idea
+.env
+server/.env
