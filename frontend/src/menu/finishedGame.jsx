@@ -3,6 +3,7 @@ import contract from 'truffle-contract';
 
 import web3Helper from './web3Helper';
 import socketHelper from './socketHelper';
+import config from './config';
 
 import gameManager from '../../../solidity/build/contracts/GameManager.json';
 
@@ -89,7 +90,14 @@ class FinishedGame extends Component {
           gameManagerContract.setProvider(web3.currentProvider);
 
           try {
-            const gameManagerInstance = await gameManagerContract.at("0xb859feb83f45977ada8f61b14f8e12696745b2ae");
+
+            let gameManagerInstance;
+
+            if (config.network === 'ropsten') {
+                gameManagerInstance = await gameManagerContract.at("0xb859feb83f45977ada8f61b14f8e12696745b2ae");
+            } else if (config.network === 'LOCAL') {
+                gameManagerInstance = await gameManagerContract.deployed();
+            }
             
             const currUser = this.state.score.find(user => user.address === web3.eth.accounts[0]);
 

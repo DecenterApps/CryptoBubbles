@@ -7,6 +7,7 @@ import Notifications, {notify} from 'react-notify-toast';
 
 import web3Helper from './web3Helper';
 import socketHelper from './socketHelper';
+import config from './config';
 
 import gameManager from '../../../solidity/build/contracts/GameManager.json';
 import gameToken from '../../../solidity/build/contracts/GameToken.json';
@@ -94,8 +95,11 @@ class Lobby extends Component {
               web3,
           });
 
+          let isAdmins = web3.eth.accounts[0] === "0x93cdb0a93fc36f6a53ed21ecf6305ab80d06beca"
+                        || web3.eth.accounts[0] === "0x627306090abab3a6e1400e9345bc60c78a8bef57";
+
           this.setState({
-              isAdmin: web3.eth.accounts[0] === "0x93cdb0a93fc36f6a53ed21ecf6305ab80d06beca",
+              isAdmin: isAdmins,
               address: web3.eth.accounts[0]
           });
 
@@ -116,9 +120,18 @@ class Lobby extends Component {
         gameTokenContract.setProvider(this.state.web3.currentProvider);
 
         try {
-            const gameTokenInstance = await gameTokenContract.at("0x3d2dab7e021ba7b05ca830f2f004c4b92202632b");
-            const gameManagerInstance = await gameManagerContract.at("0xb859feb83f45977ada8f61b14f8e12696745b2ae");
-                            
+
+            let gameTokenInstance, gameManagerInstance;
+
+            if (config.network === 'ropsten') {
+                gameTokenInstance = await gameTokenContract.at("0x3d2dab7e021ba7b05ca830f2f004c4b92202632b");
+                gameManagerInstance = await gameManagerContract.at("0xb859feb83f45977ada8f61b14f8e12696745b2ae");
+            } else if (config.network === 'LOCAL') {
+                gameTokenInstance = await gameTokenContract.deployed();
+                gameManagerInstance = await gameManagerContract.deployed();
+            }
+
+            
             this.setState({
                 gameTokenInstance,
                 gameManagerInstance

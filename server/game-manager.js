@@ -2,7 +2,10 @@ const Web3 = require('web3');
 
 require('dotenv').config();
 
-const web3 = new Web3(new Web3.providers.HttpProvider("https://ropsten.decenter.com"));
+const LOCAL_NETWORK = "http://localhost:9545";
+const KOVAN_NETWORK = "https://kovan.decenter.com";
+
+const web3 = new Web3(new Web3.providers.HttpProvider(LOCAL_NETWORK));
 
 const privateKey = Buffer.from(process.env.SERVER_PRIV_KEY, 'hex');
 const ourAddress = process.env.SERVER_ADDRESS;
