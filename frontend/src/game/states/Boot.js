@@ -30,7 +30,8 @@ export default class extends Phaser.State {
   
       socketHelper.socket.on('client-enter', (res) => {
 
-        this.canEnterGame = res;
+        //this.canEnterGame = res;
+        this.canEnterGame = true;
 
         if(!res) {
           text.setText("Sorry you are not a register player in the current game");

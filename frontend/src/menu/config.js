@@ -1,3 +1,3 @@
 module.exports = {
- network: 'LOCAL'
+ network: 'kovan'
 };

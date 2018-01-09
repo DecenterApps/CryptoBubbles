@@ -93,8 +93,8 @@ class FinishedGame extends Component {
 
             let gameManagerInstance;
 
-            if (config.network === 'ropsten') {
-                gameManagerInstance = await gameManagerContract.at("0xb859feb83f45977ada8f61b14f8e12696745b2ae");
+            if (config.network === 'kovan') {
+                gameManagerInstance = await gameManagerContract.at("0x5e52b78658ba34cd3ac162b7f5144c71669b824e");
             } else if (config.network === 'LOCAL') {
                 gameManagerInstance = await gameManagerContract.deployed();
             }

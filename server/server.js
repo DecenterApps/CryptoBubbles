@@ -28,6 +28,8 @@ let secondsInterval;
 
 gameManager.gameFinalized(gameFinished);
 
+gameManager.testEvents();
+
 function gameFinished() {
     console.log("Game is successfully finished!");
 

@@ -111,7 +111,10 @@ export default class extends Phaser.State {
         this.game.physics.arcade.moveToPointer(this.player, playersSpeed);
 
         if (isForked) {
-          //this.player.fork.body.moveTo(this.player.x, this.player.y);
+          this.player.fork.body.x = this.player.x;
+          this.player.fork.body.y = this.player.y;
+          // this.player.fork.body.velocity.set(20);
+          //game.physics.arcade.moveToObject(this.player, this.player.fork, 2000);
         }
     } else {
         this.player.body.velocity.set(0);
@@ -277,9 +280,13 @@ export default class extends Phaser.State {
 
     if (this.spaceKey.isDown && !isForked) {
       console.log("Fork!");
-      this.forkPlayer(this.player);
-      isForked = true;
+      // this.forkPlayer(this.player);
+      // isForked = true;
     }
+  }
+
+  prunePlayer(player) {
+
   }
 
   forkPlayer(player) {
