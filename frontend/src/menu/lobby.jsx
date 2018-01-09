@@ -91,25 +91,29 @@ class Lobby extends Component {
         web3Helper.then(async (results) => {
           const web3 = results.web3Instance;
 
-          this.setState({
-              web3,
-          });
+          web3.eth.getAccounts(async (err, acc) => {
+                const address = acc[0];
 
-          let isAdmins = web3.eth.accounts[0] === "0x93cdb0a93fc36f6a53ed21ecf6305ab80d06beca"
-                        || web3.eth.accounts[0] === "0x627306090abab3a6e1400e9345bc60c78a8bef57";
+                this.setState({
+                    web3,
+                    address,
+                    isAdmin: this.isAdmin(address),
+                });
 
-          this.setState({
-              isAdmin: isAdmins,
-              address: web3.eth.accounts[0]
-          });
+                this.socket.emit('get-users', address);
 
-          this.socket.emit('get-users', web3.eth.accounts[0]);
-
-          await this.setupContracts();
-          await this.getTokenBalance();
-          await this.getNumPlayers();
+                await this.setupContracts();
+                await this.getTokenBalance();
+                await this.getNumPlayers();
+            });
 
         });
+    }
+
+    //helper function
+    isAdmin(address) {
+        return (address === "0x93cdb0a93fc36f6a53ed21ecf6305ab80d06beca")
+            || (address === "0x627306090abab3a6e1400e9345bc60c78a8bef57");
     }
 
     async setupContracts() {

@@ -40,9 +40,11 @@ export default class extends Phaser.State {
     this.player = this.addPlayer(this.generatePlayerPos(), this.playerAddr, JSON.parse(this.playerInfo).userName);
     game.camera.follow(this.player);
 
+    // Handle fork action and pruning action
     this.spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+    this.pKey = game.input.keyboard.addKey(Phaser.Keyboard.P);
 
-    game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR ]);
+    game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR, Phaser.Keyboard.P ]);
 
     this.setUpText();
 
@@ -283,9 +285,20 @@ export default class extends Phaser.State {
       // this.forkPlayer(this.player);
       // isForked = true;
     }
+
+    if(this.pKey.isDown) {
+      this.prunePlayer(this.player);
+    }
   }
 
   prunePlayer(player) {
+    //reduce mass
+    player.body.mass -= 1;
+
+    console.log('Prune', player.body.x, player.body.y);
+
+    this.addDot({ x: player.body.x + this.randomIntFromInterval(-10, 10), 
+        y: player.body.y + this.randomIntFromInterval(-10, 10) });
 
   }
 

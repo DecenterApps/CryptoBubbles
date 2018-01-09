@@ -89,55 +89,59 @@ class FinishedGame extends Component {
           const gameManagerContract = contract(gameManager);
           gameManagerContract.setProvider(web3.currentProvider);
 
-          try {
+          web3.eth.getAccounts(async (err, acc) => {
+            const address = acc[0];
 
-            let gameManagerInstance;
+            try {
 
-            if (config.network === 'kovan') {
-                gameManagerInstance = await gameManagerContract.at("0x5e52b78658ba34cd3ac162b7f5144c71669b824e");
-            } else if (config.network === 'LOCAL') {
-                gameManagerInstance = await gameManagerContract.deployed();
-            }
-            
-            const currUser = this.state.score.find(user => user.address === web3.eth.accounts[0]);
+                let gameManagerInstance;
 
-            if (currUser) {
-                this.setState({
-                    tokensWon: currUser.score
-                });
-            }
+                if (config.network === 'kovan') {
+                    gameManagerInstance = await gameManagerContract.at("0x5e52b78658ba34cd3ac162b7f5144c71669b824e");
+                } else if (config.network === 'LOCAL') {
+                    gameManagerInstance = await gameManagerContract.deployed();
+                }
+                
+                const currUser = this.state.score.find(user => user.address === address);
 
-            gameManagerInstance.Voted((err, res) => {
-                console.log("Voted event", res.args);
-    
-                if (!this.userVoted()) {
+                if (currUser) {
                     this.setState({
-                        numPlayersVoted: ++this.state.numPlayersVoted
+                        tokensWon: currUser.score
                     });
                 }
-            });
 
-            gameManagerInstance.GameFinalized((err, res) => {
-                console.log("Game End", res);
-    
-                //switch to index
-            });
+                gameManagerInstance.Voted((err, res) => {
+                    console.log("Voted event", res.args);
+        
+                    if (!this.userVoted()) {
+                        this.setState({
+                            numPlayersVoted: ++this.state.numPlayersVoted
+                        });
+                    }
+                });
+
+                gameManagerInstance.GameFinalized((err, res) => {
+                    console.log("Game End", res);
+        
+                    //switch to index
+                });
+
+                this.setState({
+                    gameManagerInstance,
+                });
+
+                this.socket.emit('load-votes');
+                
+            } catch(err) {
+                console.log(err);
+            }
+
 
             this.setState({
-                gameManagerInstance,
+                web3,
+                address,
             });
-
-            this.socket.emit('load-votes');
-            
-          } catch(err) {
-              console.log(err);
-          }
-
-
-          this.setState({
-              web3,
-              address: web3.eth.accounts[0]
-          });
+        });
         });
     }
 
