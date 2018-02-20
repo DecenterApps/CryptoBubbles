@@ -26,9 +26,9 @@ const WAIT_FOR_VOTES = 1000 * 180; //3 minutes
 let secondsInGame = 0;
 let secondsInterval;
 
-gameManager.gameFinalized(gameFinished);
+// gameManager.gameFinalized(gameFinished);
 
-gameManager.testEvents();
+// gameManager.testEvents();
 
 function gameFinished() {
     console.log("Game is successfully finished!");

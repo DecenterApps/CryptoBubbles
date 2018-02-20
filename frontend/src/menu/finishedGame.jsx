@@ -97,7 +97,7 @@ class FinishedGame extends Component {
                 let gameManagerInstance;
 
                 if (config.network === 'kovan') {
-                    gameManagerInstance = await gameManagerContract.at("0x5e52b78658ba34cd3ac162b7f5144c71669b824e");
+                    gameManagerInstance = await gameManagerContract.at("0x3e71b22d139607b97897e9cb7c1db109c1c2f20d");
                 } else if (config.network === 'LOCAL') {
                     gameManagerInstance = await gameManagerContract.deployed();
                 }

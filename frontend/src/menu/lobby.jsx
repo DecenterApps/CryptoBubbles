@@ -128,8 +128,8 @@ class Lobby extends Component {
             let gameTokenInstance, gameManagerInstance;
 
             if (config.network === 'kovan') {
-                gameTokenInstance = await gameTokenContract.at("0x4009f36e754635a0b694ec1c7b4f57b610ee21c6");
-                gameManagerInstance = await gameManagerContract.at("0x5e52b78658ba34cd3ac162b7f5144c71669b824e");
+                gameTokenInstance = await gameTokenContract.at("0x7d4910abd9b33ab92287a6ca66edbc8eb333ec6b");
+                gameManagerInstance = await gameManagerContract.at("0x3e71b22d139607b97897e9cb7c1db109c1c2f20d");
             } else if (config.network === 'LOCAL') {
                 gameTokenInstance = await gameTokenContract.deployed();
                 gameManagerInstance = await gameManagerContract.deployed();

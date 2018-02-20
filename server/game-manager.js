@@ -29,7 +29,8 @@ async function hasGameStarted() {
 
 async function testEvents() {
     try {
-        const res = await gameManager.serverNeededEvent({from: web3.eth.accounts[0]});
+
+        const res = await gameManager.serverNeededEvent({from: ourAddress});
         
         gameManager.ServerNeeded((err, res) => {
             if (err) {

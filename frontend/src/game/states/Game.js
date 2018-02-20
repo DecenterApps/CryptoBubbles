@@ -26,7 +26,7 @@ export default class extends Phaser.State {
     this.playerInfo = localStorage.getItem(this.playerAddr);
 
     // create the world and enable physics
-    game.physics.startSystem(Phaser.Physics.ARCADE);    
+    game.physics.startSystem(Phaser.Physics.ARCADE);
     game.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
     game.add.tileSprite(0, 0, game.world.width, game.world.height, 'background');
 
