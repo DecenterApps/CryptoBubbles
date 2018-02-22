@@ -1,7 +1,7 @@
 import { h, render, Component } from 'preact';
 import contract from 'truffle-contract';
 
-import web3Helper from './web3Helper';
+import getWeb3 from './getWeb3';
 import socketHelper from './socketHelper';
 import config from './config';
 

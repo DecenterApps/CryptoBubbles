@@ -5,15 +5,12 @@ import "./lobby.css";
 import Web3 from 'web3'
 import Notifications, {notify} from 'react-notify-toast';
 
-import web3Helper from './web3Helper';
+import getWeb3 from './getWeb3';
 import socketHelper from './socketHelper';
-import config from './config';
+import { GAME_MANAGER_ADDRESS, ENTRY_PRICE } from './config';
 
 import gameManager from '../../../solidity/build/contracts/GameManager.json';
 import gameToken from '../../../solidity/build/contracts/GameToken.json';
-
-const NUM_WEI_PER_TOKEN = 10000000000000;
-const MIN_TOKENS = 1200;
 
 import LoadingGif from './loading.gif';
 
@@ -25,13 +22,10 @@ class Lobby extends Component {
         this.state = {
             web3: null,
             gameManagerInstance: null,
-            gameTokenInstance: null,
-            tokenBalance: 0,
-            tokensSubmited: '',
-            tokensToBuy: '',
             address: "",
             joinedUsers: [],
             numPlayers: 0,
+            round: 0,
             isAdmin: false,
             playersName: '',
             isPreSale: true,
@@ -43,11 +37,9 @@ class Lobby extends Component {
         };
 
         this.joinGame = this.joinGame.bind(this);
-        this.buyTokens = this.buyTokens.bind(this);
         this.onInputChange = this.onInputChange.bind(this);
         this.manualStart = this.manualStart.bind(this);
         this.resetGame = this.resetGame.bind(this);
-        this.joinGameFree = this.joinGameFree.bind(this);
 
         this.socket = socketHelper();
 
@@ -88,25 +80,20 @@ class Lobby extends Component {
     }
 
     async componentWillMount() {
-        web3Helper.then(async (results) => {
-          const web3 = results.web3Instance;
 
-          web3.eth.getAccounts(async (err, acc) => {
-                const address = acc[0];
+        web3.eth.getAccounts(async (err, acc) => {
+            const address = acc[0];
 
-                this.setState({
-                    web3,
-                    address,
-                    isAdmin: this.isAdmin(address),
-                });
-
-                this.socket.emit('get-users', address);
-
-                await this.setupContracts();
-                await this.getTokenBalance();
-                await this.getNumPlayers();
+            this.setState({
+                web3,
+                address,
+                isAdmin: this.isAdmin(address),
             });
 
+            this.socket.emit('get-users', address);
+
+            await this.setupContracts();
+            await this.getNumPlayers();
         });
     }
 
@@ -124,35 +111,12 @@ class Lobby extends Component {
         gameTokenContract.setProvider(this.state.web3.currentProvider);
 
         try {
-
-            let gameTokenInstance, gameManagerInstance;
-
-            if (config.network === 'kovan') {
-                gameTokenInstance = await gameTokenContract.at("0x7d4910abd9b33ab92287a6ca66edbc8eb333ec6b");
-                gameManagerInstance = await gameManagerContract.at("0x3e71b22d139607b97897e9cb7c1db109c1c2f20d");
-            } else if (config.network === 'LOCAL') {
-                gameTokenInstance = await gameTokenContract.deployed();
-                gameManagerInstance = await gameManagerContract.deployed();
-            }
-
+            const gameManagerInstance = await gameManagerContract.at(GAME_MANAGER_ADDRESS);
             
             this.setState({
-                gameTokenInstance,
                 gameManagerInstance
             });
-        } catch(err) {
-            console.log(err);
-        }
-    }
 
-    async getTokenBalance() {
-
-        try {
-            const res = await this.state.gameTokenInstance.balanceOf(web3.eth.accounts[0]);
-            
-            this.setState({
-                tokenBalance: res.valueOf()
-            });
         } catch(err) {
             console.log(err);
         }
@@ -164,27 +128,6 @@ class Lobby extends Component {
         this.setState({
             numPlayers: res.valueOf()
         });
-    }
-
-    async buyTokens() {
-        try {
-
-            const tokensToBuy = this.state.tokensToBuy;
-
-            const ethPrice = tokensToBuy * NUM_WEI_PER_TOKEN;
-
-            const res = await this.state.gameTokenInstance
-                        .buyAndApprove("0x3da2ce9724a918029ce1b8281274ec110277c4ff", {from: web3.eth.accounts[0], value: ethPrice});
-
-            this.setState({
-                tokensToBuy: ''
-            });
-
-            await this.getTokenBalance();
-
-        } catch(err) {
-            console.log(err);
-        }
     }
 
     async manualStart() {
@@ -221,38 +164,6 @@ class Lobby extends Component {
 
     async joinGame() {
 
-        // const numTokens = this.state.tokensSubmited;
-        // const managerInstance = this.state.gameManagerInstance;
-
-        // if (numTokens < MIN_TOKENS) {
-        //     console.log("Need more tokens");
-        // }
-
-        // try {
-        //     const res = await managerInstance.joinGame(web3.eth.accounts[0], numTokens, {from: web3.eth.accounts[0]});
-
-        //     const event = res.logs[0];
-
-        //     const newUser = {
-        //         address: event.args.user,
-        //         numTokens: event.args.numTokens.valueOf()
-        //     };
-
-        //     this.socket.emit('user-joined', newUser);
-
-        //     this.setState({
-        //         tokensSubmited: 0,
-        //         joinedUsers: [...this.state.joinedUsers, newUser],
-        //         numPlayers: ++this.state.numPlayers
-        //     });
-
-        // } catch(err) {
-        //     console.log('ERR', err);
-        // }
-    }
-
-    async joinGameFree() {
-
         const managerInstance = this.state.gameManagerInstance;
 
         let inputErr = 'You must enter a username!';
@@ -279,14 +190,13 @@ class Lobby extends Component {
                isLoading: true
             });
 
-            const res = await managerInstance.joinGameFree({from: web3.eth.accounts[0]});
-
+            const res = await managerInstance.joinGame({from: web3.eth.accounts[0], value: ENTRY_PRICE});
+            
             const event = res.logs[0];
 
             const newUser = {
                 address: event.args.user,
                 userName: this.state.playersName,
-                numTokens: event.args.numTokens.valueOf(),
                 position: this.state.numPlayers
             };
 
@@ -303,7 +213,7 @@ class Lobby extends Component {
             });
 
         } catch(err) {
-            console.log('ERR', err);
+            console.log('ERR: ', err);
         }
     }
 
@@ -331,7 +241,7 @@ class Lobby extends Component {
                     <h3>Crypto Bubbles</h3>
                 }
                 {/* <div className="outter"><img src="https://www.ethereum.org/images/logos/ETHEREUM-ICON_Black_small.png" className="image-circle"/></div>    */}
-                <div> - You currently own { this.state.tokenBalance } BT - </div>
+                <div> - Round #{ this.state.round } </div>
             </div>
             <div>
                 <div className="col-md-6 col-xs-6 follow line" align="center">
@@ -341,7 +251,7 @@ class Lobby extends Component {
                 </div>
                 <div className="col-md-6 col-xs-6 follow line" align="center">
                     <h3>
-                         1000 BT<br/> <span>Tokens for entry</span>
+                         0.01 ETH<br/> <span>Required for entry</span>
                     </h3>
                 </div>
             </div>
@@ -368,7 +278,7 @@ class Lobby extends Component {
                     </div>
                     
                     <div align="center">
-                         <button className="btn btn-orange" onClick={ this.joinGameFree } disabled={ this.state.alreadyJoined }>
+                         <button className="btn btn-orange" onClick={ this.joinGame } disabled={ this.state.alreadyJoined }>
                             { this.state.alreadyJoined ? 'Game Joined!' : 'Join Game'}
                          </button>
                     </div>

@@ -1,6 +1,4 @@
-pragma solidity ^0.4.11;
-
-import "./GameToken.sol";
+pragma solidity ^0.4.18;
 
 contract GameManager {
 
@@ -14,13 +12,12 @@ contract GameManager {
         _;
     }
     
-    event GameJoined(address indexed user, uint numTokens, uint playerPos);
-    event GameStarted(address byWhom, uint numPlayers, uint timestamp);
-    event GameFinalized(address user, uint numPlayers);
-    event Voted(address user, bytes32 currStateHash, bytes32 newStateHash, uint currPlayer, uint numVoted);
+    event GameJoined(uint indexed rounds, address indexed user, uint playerPos);
+    event GameStarted(uint indexed rounds, address byWhom, uint numPlayers, uint timestamp);
+    event GameFinalized(uint indexed rounds, address user, uint numPlayers);
+    event Voted(uint indexed rounds, address user, bytes32 currStateHash, bytes32 newStateHash, uint currPlayer, uint numVoted);
     event ServerNeeded();
 
-    uint32[] public gameBalances; //TODO: take care of overflows
     uint public currPlayerIndex;
     mapping (uint => address) public userPosition;
     mapping (address => bool) public usersInGame;
@@ -30,7 +27,6 @@ contract GameManager {
     mapping (address => bool) public hasVoted;
 
     address public owner;
-    GameToken public gameToken;
 
     bytes32 public currStateHash;
     uint public numStateVerified;
@@ -38,20 +34,20 @@ contract GameManager {
     bool public callTheServer;
     bool public playersVoted;
     
-    uint public tokensGiven;
     uint public creationTime;
     address public server;
     
     uint public submitStateStartTime;
     uint public numGamesPlayed;
+    
+    uint public rounds;
 
-    uint REWARD_FOR_FINALIZE = 2000; // 2000 GT
     uint VOTE_PERIOD = 5 minutes;
     uint32 ONE_PLAY = 1000;
     uint FEE = 200;
     uint MIN_PLAYERS = 5;
     uint MAX_PLAYERS = 25;
-    uint MAX_TOKENS_TO_GIVE = 100000000;
+    uint PRICE_TO_ENTER = 10 ** 15;
 
     function GameManager() public {
         owner = msg.sender;
@@ -59,66 +55,40 @@ contract GameManager {
         playersVoted = false;
         callTheServer = false;
         numStateVerified = 0;
-        tokensGiven = 0;
         creationTime = now;
 
         currPlayerIndex = 0;
+        rounds = 0;
     }
     
-    // We want to reward the initial supporters of the game
-    // There will be an initial token amount that is given
-    // Token fee to play the game is paid by the contract
-    // This can only be called 3 weeks after the contract creating
-    // And if less than a million tokens have been given away
-    function joinGameFree() public {
-        require(tokensGiven < MAX_TOKENS_TO_GIVE && now < (creationTime + 3 weeks));
+    function joinGame() public payable {
+        require(msg.value >= PRICE_TO_ENTER);
         
-        enterGame(ONE_PLAY);
-        
-        tokensGiven += ONE_PLAY;
-    }
-
-    // Notice: for this call to execute we must first call .approve() 
-    // in gameToken contract, so that our contract can spend it
-    function joinGame(uint32 numTokens) public {
-        // A user must submit some fixed num. of tokens to join the game
-        require(numTokens > (ONE_PLAY + FEE));
-
-        // Transfer the tokens to the address of this contract
-        gameToken.transferFrom(msg.sender, this, numTokens);
-
-        enterGame(numTokens);
-    }
-    
-    function enterGame(uint32 numTokens) internal {
-      // A user can't enter a game while the game is ongoing
+         // A user can't enter a game while the game is ongoing
         require(gameInProgress == false);
-
+    
         // A user can't enter a game twice with the same address
         require(usersInGame[msg.sender] == false);
-
+    
         // We can't have more than 25 players?
         require(currPlayerIndex <= 25);
-
-        // we stake the players tokens, and save it in an array
-        gameBalances.push(numTokens);
         
         // remember which position in the array did the player get
         userPosition[currPlayerIndex] = msg.sender;
-
+    
         usersInGame[msg.sender] = true;
-
+    
         // Update the current position in the array
         currPlayerIndex++;
         
         // trigger game start if we reached the required num. of players
         if (currPlayerIndex >= MIN_PLAYERS) {
             gameInProgress = true;
-            GameStarted(msg.sender, currPlayerIndex, now);
+            GameStarted(rounds, msg.sender, currPlayerIndex, now);
         }
         
-        GameJoined(msg.sender, numTokens, currPlayerIndex);   
-     }
+        GameJoined(rounds, msg.sender, currPlayerIndex); 
+    }
 
     // What happens if some of the players don't vote??
     function gameEnds(uint32[] state, uint position) public {
@@ -134,7 +104,7 @@ contract GameManager {
         
         bytes32 stateHash = keccak256(state);
 
-        Voted(msg.sender, currStateHash, stateHash, currPlayerIndex, numStateVerified);
+        Voted(rounds, msg.sender, currStateHash, stateHash, currPlayerIndex, numStateVerified);
         
         // we remove the user from game, so he can join in the next one
         usersInGame[msg.sender] = false;
@@ -182,7 +152,7 @@ contract GameManager {
             submitState(state);
             
             // reward the player for calling this function
-            gameToken.transfer(msg.sender, REWARD_FOR_FINALIZE);
+            // gameToken.transfer(msg.sender, REWARD_FOR_FINALIZE);
             
         } else {
             // who you gonna call when a cheater appears?
@@ -210,7 +180,7 @@ contract GameManager {
         
         numGamesPlayed++;
         
-        GameFinalized(msg.sender, currPlayerIndex);
+        GameFinalized(rounds, msg.sender, currPlayerIndex);
 
         newGameSession();
     }
@@ -218,7 +188,7 @@ contract GameManager {
     function withdrawWins() public {
         require(balances[msg.sender] > 0);
 
-        gameToken.transfer(msg.sender, balances[msg.sender]);
+        msg.sender.transfer(balances[msg.sender]);
     }
     
     function newGameSession() internal {
@@ -227,19 +197,11 @@ contract GameManager {
         callTheServer = false;
         numStateVerified = 0;
         currPlayerIndex = 0;
-        tokensGiven = 0;
-        
+
         currStateHash = 0x0;
         
-        delete gameBalances;
-    }
-    
-    function setGameToken(address gameTokenAddress) public onlyOwner {
-        gameToken = GameToken(gameTokenAddress);
-    }
-    
-    function isInPreSale() public constant returns(bool) {
-        return tokensGiven < MAX_TOKENS_TO_GIVE && now < (creationTime + 3 weeks);
+        rounds++;
+        
     }
     
     function setServer(address _server) public onlyOwner {
@@ -256,10 +218,6 @@ contract GameManager {
         MIN_PLAYERS = _MIN_PLAYERS;
     }
     
-    function changeTokenAddress(address _tokenAddress) public onlyOwner {
-        gameToken = GameToken(_tokenAddress);
-    }
-    
     function resetGame() public onlyOwner {
         
         usersInGame[msg.sender] = false;
@@ -273,19 +231,7 @@ contract GameManager {
 
     function startGame() public onlyOwner {
         gameInProgress = true;
-        GameStarted(msg.sender, currPlayerIndex, now);
-    }
-    
-    function serverNeededEvent() public  {
-        ServerNeeded();
-    }
-    
-    function gameJoinedEvent() public {
-        GameJoined(msg.sender, 1000, 1);
-    }
-    
-    function gameStartedEvent() public {
-        GameStarted(msg.sender, currPlayerIndex, now);
+        GameStarted(rounds, msg.sender, currPlayerIndex, now);
     }
     
 }

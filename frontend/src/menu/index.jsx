@@ -3,12 +3,22 @@ import Router from 'preact-router';
 import Lobby from './lobby.jsx';
 import FinishedGame from './finishedGame.jsx';
 
+import getWeb3 from './getWeb3';
 
-const Main = () => (
-	<Router>
-		<Lobby path="/" />
-		<FinishedGame path="/end" />
-	</Router>
-);
+class Main {
+
+	async componentWillMount() {
+		await getWeb3();
+	}
+
+	render() {
+		return (
+			<Router>
+				<Lobby path="/" />
+				<FinishedGame path="/end" />
+			</Router>
+		);
+	} 
+}
 
 render(<Main />, document.body);

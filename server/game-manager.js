@@ -3,9 +3,9 @@ const Web3 = require('web3');
 require('dotenv').config();
 
 const LOCAL_NETWORK = "http://localhost:7545";
-const KOVAN_NETWORK = "https://kovan.decenter.com";
+const ROPSTEN_NETWORK = "https://ropsten.decenter.com";
 
-const web3 = new Web3(new Web3.providers.HttpProvider(KOVAN_NETWORK));
+const web3 = new Web3(new Web3.providers.HttpProvider(ROPSTEN_NETWORK));
 
 const privateKey = Buffer.from(process.env.SERVER_PRIV_KEY, 'hex');
 const ourAddress = process.env.SERVER_ADDRESS;
@@ -16,6 +16,19 @@ const gameManager = web3.eth.contract(gameManagerAbi.abi).at(process.env.CONTRAC
 
 let nonce = web3.eth.getTransactionCount(ourAddress);
 const gasPrice = 102509001; // Magic
+
+async function pooling() {
+
+    const rounds = await gameManager.rounds();
+
+    setInterval(async () => {
+ 
+        gameManager.GameJoined({rounds: 0}, {fromBlock: 0, toBlock: 'latest'})
+        .get(async (err, events) => {
+            console.log(events);
+        });
+    }, 1000 * 15);
+}
 
 async function hasGameStarted() {
     try {
@@ -152,4 +165,5 @@ module.exports = {
     gameStarted,
     serverJudgement,
     testEvents,
+    pooling,
 };

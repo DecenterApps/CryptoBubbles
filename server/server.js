@@ -30,6 +30,8 @@ let secondsInterval;
 
 // gameManager.testEvents();
 
+gameManager.pooling();
+
 function gameFinished() {
     console.log("Game is successfully finished!");
 
