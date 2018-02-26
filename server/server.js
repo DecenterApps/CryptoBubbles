@@ -26,10 +26,6 @@ const WAIT_FOR_VOTES = 1000 * 180; //3 minutes
 let secondsInGame = 0;
 let secondsInterval;
 
-// gameManager.gameFinalized(gameFinished);
-
-// gameManager.testEvents();
-
 gameManager.pooling();
 
 function gameFinished() {
@@ -40,17 +36,6 @@ function gameFinished() {
     clearGame();
 }
 
-gameManager.userVoted().then(res => {
-    console.log("User voted! in event", res.args);
-});
-
-gameManager.serverNeeded().then(res => {
-    console.log("Game server is needed!", res.args);
-});
-
-gameManager.userJoined().then(res => {
-    console.log("User has joined", res.args);
-});
 
 (async () => {
     const res = await gameManager.hasGameStarted();

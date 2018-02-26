@@ -17,14 +17,22 @@ const gameManager = web3.eth.contract(gameManagerAbi.abi).at(process.env.CONTRAC
 let nonce = web3.eth.getTransactionCount(ourAddress);
 const gasPrice = 102509001; // Magic
 
+let rounds = 0;
+let numVotes = 0;
+
 async function pooling() {
 
-    const rounds = await gameManager.rounds();
+    rounds = await gameManager.rounds();
+
+    rounds = rounds.valueOf();
 
     setInterval(async () => {
  
-        gameManager.GameJoined({rounds: 0}, {fromBlock: 0, toBlock: 'latest'})
+        console.log('Rounds: ', rounds);
+
+        gameManager.Voted({rounds}, {fromBlock: 0, toBlock: 'latest'})
         .get(async (err, events) => {
+            numVotes = events.length;
             console.log(events);
         });
     }, 1000 * 15);

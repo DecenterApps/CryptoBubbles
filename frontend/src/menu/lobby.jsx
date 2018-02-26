@@ -1,5 +1,4 @@
 import { h, render, Component } from 'preact';
-import contract from 'truffle-contract';
 import "./lobby.css";
 
 import Web3 from 'web3'
@@ -8,9 +7,6 @@ import Notifications, {notify} from 'react-notify-toast';
 import getWeb3 from './getWeb3';
 import socketHelper from './socketHelper';
 import { GAME_MANAGER_ADDRESS, ENTRY_PRICE } from './config';
-
-import gameManager from '../../../solidity/build/contracts/GameManager.json';
-import gameToken from '../../../solidity/build/contracts/GameToken.json';
 
 import LoadingGif from './loading.gif';
 
@@ -21,14 +17,12 @@ class Lobby extends Component {
 
         this.state = {
             web3: null,
-            gameManagerInstance: null,
             address: "",
             joinedUsers: [],
             numPlayers: 0,
             round: 0,
             isAdmin: false,
             playersName: '',
-            isPreSale: true,
             gameInProgress: false,
             alreadyJoined: false,
             isLoading: false,
@@ -41,60 +35,20 @@ class Lobby extends Component {
         this.manualStart = this.manualStart.bind(this);
         this.resetGame = this.resetGame.bind(this);
 
-        this.socket = socketHelper();
-
-        this.socket.on('game-started', () => {
-            console.log("Game started");
-            localStorage.setItem('score', JSON.stringify(this.state.joinedUsers));
-            window.location.href = 'game.html';
-        });
-
-        this.socket.on('load-users', (users, gameInProgress) => {
-            const currUser = users.find(u => u.address === this.state.address);
-
-            if (currUser) {
-                this.setState({ alreadyJoined: true, playersName: currUser.userName });
-            }
-
-            this.setState({ joinedUsers: users, gameInProgress });
-        });
-
-        this.socket.on('add-user', (user) => {
-            this.setState({
-                joinedUsers: [...this.state.joinedUsers, user],
-                numPlayers: ++this.state.numPlayers
-            });
-        });
-
-        this.socket.on('game-starting', () => {
-            this.setState({
-                isLoading: true,
-                loadingText: 'Prepare for battle the game is about to start...'
-            })
-        });
-
-        // How many seconds of the game has passed (show in UI while people are waiting)
-        this.socket.on('seconds', (sec) => {
-            // console.log(sec);
-        });
+        this.listeningOnSockets();
     }
 
     async componentWillMount() {
 
-        web3.eth.getAccounts(async (err, acc) => {
-            const address = acc[0];
-
-            this.setState({
-                web3,
-                address,
-                isAdmin: this.isAdmin(address),
-            });
-
-            this.socket.emit('get-users', address);
-
-            await this.setupContracts();
-            await this.getNumPlayers();
+        this.setState({
+            web3: window.web3,
+            address: window.account,
+            isAdmin: this.isAdmin(window.account),
         });
+
+        this.socket.emit('get-users', window.account);
+
+        await this.getNumPlayers();
     }
 
     //helper function
@@ -103,27 +57,8 @@ class Lobby extends Component {
             || (address === "0x627306090abab3a6e1400e9345bc60c78a8bef57");
     }
 
-    async setupContracts() {
-        const gameManagerContract = contract(gameManager);
-        gameManagerContract.setProvider(this.state.web3.currentProvider);
-
-        const gameTokenContract = contract(gameToken);
-        gameTokenContract.setProvider(this.state.web3.currentProvider);
-
-        try {
-            const gameManagerInstance = await gameManagerContract.at(GAME_MANAGER_ADDRESS);
-            
-            this.setState({
-                gameManagerInstance
-            });
-
-        } catch(err) {
-            console.log(err);
-        }
-    }
-
     async getNumPlayers() {
-        const res = await this.state.gameManagerInstance.currPlayerIndex();
+        const res = await window.gameManagerInstance.currPlayerIndex();
         
         this.setState({
             numPlayers: res.valueOf()
@@ -135,7 +70,7 @@ class Lobby extends Component {
 
             this.socket.emit('game-starting');
 
-            await this.state.gameManagerInstance.startGame({from: web3.eth.accounts[0]});
+            await window.gameManagerInstance.startGame({from: web3.eth.accounts[0]});
 
             console.log("Starting game...");
 
@@ -149,7 +84,7 @@ class Lobby extends Component {
     async resetGame() {
         try {
 
-            await this.state.gameManagerInstance.resetGame({from: web3.eth.accounts[0]});
+            await window.gameManagerInstance.resetGame({from: web3.eth.accounts[0]});
 
             console.log("reset");
 
@@ -164,7 +99,7 @@ class Lobby extends Component {
 
     async joinGame() {
 
-        const managerInstance = this.state.gameManagerInstance;
+        const managerInstance = window.gameManagerInstance;
 
         let inputErr = 'You must enter a username!';
 
@@ -227,6 +162,42 @@ class Lobby extends Component {
         });
     }
 
+    listeningOnSockets() {
+        this.socket = socketHelper();
+
+        this.socket.on('game-started', () => {
+            console.log("Game started");
+            localStorage.setItem('score', JSON.stringify(this.state.joinedUsers));
+            window.location.href = 'game.html';
+        });
+
+        this.socket.on('load-users', (users, gameInProgress) => {
+            const currUser = users.find(u => u.address === this.state.address);
+
+            console.log('Loading users');
+
+            if (currUser) {
+                this.setState({ alreadyJoined: true, playersName: currUser.userName });
+            }
+
+            this.setState({ joinedUsers: users, gameInProgress });
+        });
+
+        this.socket.on('add-user', (user) => {
+            this.setState({
+                joinedUsers: [...this.state.joinedUsers, user],
+                numPlayers: ++this.state.numPlayers
+            });
+        });
+
+        this.socket.on('game-starting', () => {
+            this.setState({
+                isLoading: true,
+                loadingText: 'Prepare for battle the game is about to start...'
+            })
+        });
+    }
+
     render() {
         return (
             <div className="row login_box">
@@ -240,7 +211,6 @@ class Lobby extends Component {
                     !this.state.gameInProgress &&
                     <h3>Crypto Bubbles</h3>
                 }
-                {/* <div className="outter"><img src="https://www.ethereum.org/images/logos/ETHEREUM-ICON_Black_small.png" className="image-circle"/></div>    */}
                 <div> - Round #{ this.state.round } </div>
             </div>
             <div>
@@ -305,7 +275,7 @@ class Lobby extends Component {
                       {
                         this.state.joinedUsers.map((user, i) => (
                           <li key={user.userName}>
-                            {user.userName} ({user.numTokens} BT)
+                            - {user.userName}
                           </li>
                         ))
                       }
