@@ -10,6 +10,11 @@ import { GAME_MANAGER_ADDRESS, ENTRY_PRICE } from './config';
 
 import LoadingGif from './loading.gif';
 
+import DecenterLogo from '../../assets/images/decenter-logo.png';
+import EthereumLogo from '../../assets/images/ethereum-logo.png';
+import BitcoinLogo from '../../assets/images/Bitcoin-Logo.png';
+
+
 class Lobby extends Component {
 
     constructor(props) {
@@ -26,6 +31,7 @@ class Lobby extends Component {
             gameInProgress: false,
             alreadyJoined: false,
             isLoading: false,
+            selected: 1,
             loadingText: 'Please wait while the transaction is being mined',
             inputError: ''
         };
@@ -132,7 +138,8 @@ class Lobby extends Component {
             const newUser = {
                 address: event.args.user,
                 userName: this.state.playersName,
-                position: this.state.numPlayers
+                position: this.state.numPlayers,
+                type: this.state.selected
             };
 
             localStorage.setItem(newUser.address, JSON.stringify(newUser));
@@ -198,7 +205,13 @@ class Lobby extends Component {
         });
     }
 
+    selectLogo(type) {
+        this.setState({ selected: type });
+    }
+
     render() {
+        const { selected } = this.state;
+
         return (
             <div className="row login_box">
 
@@ -221,7 +234,7 @@ class Lobby extends Component {
                 </div>
                 <div className="col-md-6 col-xs-6 follow line" align="center">
                     <h3>
-                         0.01 ETH<br/> <span>Required for entry</span>
+                         0.001 ETH<br/> <span>Required for entry</span>
                     </h3>
                 </div>
             </div>
@@ -233,6 +246,25 @@ class Lobby extends Component {
                         <div className="loading-text">{ this.state.loadingText }</div>
                     </div>
                 }
+
+                <div className="logo-selecter-box">
+                    <h4> - Select a player type - </h4>
+
+                    <span className={`logo-box ${selected === 1 ? 'selected-box' : ''}`} onClick={() => this.selectLogo(1)}>
+                        <div className="logo-name">Decenter </div>
+                        <img src={ DecenterLogo }/>
+                    </span>
+
+                    <span className={`logo-box ${selected === 2 ? 'selected-box' : ''}`} onClick={() => this.selectLogo(2)}>
+                        <div className="logo-name">Ethereum </div>
+                        <img src={ EthereumLogo }/>
+                    </span>
+
+                    <span className={`logo-box ${selected === 3 ? 'selected-box' : ''}`} onClick={() => this.selectLogo(3)}>
+                        <div className="logo-name">Bitcoin </div>
+                        <img src={ BitcoinLogo }/>
+                    </span>
+                </div>
                     
                     <div className="control">
                         <div className="label">{ this.state.inputError }</div>

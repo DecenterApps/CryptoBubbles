@@ -52,13 +52,21 @@ class Main extends Component {
 
 		const { isReady } = this.state;
 
-		return (
-			isReady && 
-			<Router>
-				<Lobby path="/" />
-				<FinishedGame path="/end" />
-			</Router>
-		);
+		if (isReady) {
+			return (
+				<Router>
+					<Lobby path="/" />
+					<FinishedGame path="/end" />
+				</Router>
+			);
+		} else {
+			return (
+				<div>
+					Please switch over to Ropsten network
+				</div>
+			);
+		}
+	
 	} 
 }
 

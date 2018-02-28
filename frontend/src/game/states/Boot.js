@@ -19,8 +19,11 @@ export default class extends Phaser.State {
     let text = this.add.text(this.world.centerX, this.world.centerY, 'Loading the game...', { font: '20px Arial', align: 'center' });
     text.anchor.setTo(0.5, 0.5);
 
+    this.load.image('ethereum', 'assets/images/ethereum-logo.png');
+    this.load.image('bitcoin', 'assets/images/Bitcoin-Logo.png');
+
     this.load.image('decenter', 'assets/images/decenter-logo.png');
-    this.load.image('background', 'assets/images/tile.jpeg');    
+    this.load.image('background', 'assets/images/tile.jpeg');
     this.load.image('dot', 'assets/images/dot.png');
     game.load.spritesheet('button', 'assets/button_sprite_sheet.png', 150, 50);   
 

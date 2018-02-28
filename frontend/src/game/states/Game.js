@@ -5,6 +5,7 @@ import Player from '../objects/Player';
 import web3Helper from '../helpers/web3Helper';
 import scoreboard from '../helpers/scoreboard';
 import socketHelper from '../helpers/socketHelper';
+import { randomIntFromInterval } from '../helpers/utils';
 
 let gameTime = 60; //1 min
 let playersSpeed = 300;
@@ -34,17 +35,18 @@ export default class extends Phaser.State {
     this.dotGroup = this.game.add.group();
     this.playersGroup = this.game.add.group();
 
-    console.log('Username from local: ' + this.playerInfo);
-
     // add the current player to the game
     this.player = this.addPlayer(this.generatePlayerPos(), this.playerAddr, JSON.parse(this.playerInfo).userName);
-    game.camera.follow(this.player);
+
+    this.currentPlayer = new Player(game, 50, 50, this.getSprite());
 
     // Handle fork action and pruning action
     this.spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
     this.pKey = game.input.keyboard.addKey(Phaser.Keyboard.P);
 
-    game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR, Phaser.Keyboard.P ]);
+    this.spaceKey.onDown.add(this.currentPlayer.fork, this.currentPlayer);
+
+    //game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR, Phaser.Keyboard.P ]);
 
     this.setUpText();
 
@@ -56,6 +58,46 @@ export default class extends Phaser.State {
 
     this.showTimer();
 
+  }
+
+
+
+  update() {
+    this.socket.emit('move', this.player.position, this.playerAddr);
+
+    this.game.physics.arcade.overlap(this.player, this.dotGroup, this.dotEaten, null, this);
+
+    this.game.physics.arcade.overlap(this.player, this.playersGroup, this.playerEaten, null, this);
+
+    //this.followMouse();
+
+    const { x, y } = this.spriteCenter(this.player);
+
+    this.playerNameText.x = x;
+    this.playerNameText.y = y;
+
+    // if (this.spaceKey.isDown && !isForked) {
+    //   console.log("Fork!");
+    //   // this.forkPlayer(this.player);
+    //   isForked = true;
+    //   this.currentPlayer.fork();
+    // }
+
+    if(this.pKey.isDown) {
+      this.prunePlayer(this.player);
+    }
+  }
+
+  getSprite() {
+    const type = JSON.parse(this.playerInfo).type;
+
+    if (type === 2) {
+      return 'ethereum';
+    } else if (type === 3) {
+      return 'bitcoin';
+    } else {
+      return 'decenter';
+    }
   }
 
   setUpText() {
@@ -106,21 +148,6 @@ export default class extends Phaser.State {
     this.playerText(currPlayer);
 
     return currPlayer;
-  }
-
-  followMouse() {
-    if (this.game.physics.arcade.distanceToPointer(this.player, this.game.input.activePointer) > 8) {
-        this.game.physics.arcade.moveToPointer(this.player, playersSpeed);
-
-        if (isForked) {
-          this.player.fork.body.x = this.player.x;
-          this.player.fork.body.y = this.player.y;
-          // this.player.fork.body.velocity.set(20);
-          //game.physics.arcade.moveToObject(this.player, this.player.fork, 2000);
-        }
-    } else {
-        this.player.body.velocity.set(0);
-    }
   }
 
   addDot(pos) {
@@ -191,8 +218,8 @@ export default class extends Phaser.State {
 
   generatePlayerPos() {
     return {
-      x: this.randomIntFromInterval(100, GAME_WIDTH - 100),
-      y: this.randomIntFromInterval(100, GAME_HEIGHT - 100),
+      x: randomIntFromInterval(100, GAME_WIDTH - 100),
+      y: randomIntFromInterval(100, GAME_HEIGHT - 100),
     }
   }
 
@@ -266,39 +293,14 @@ export default class extends Phaser.State {
     });
   }
 
-  update() {
-    this.socket.emit('move', this.player.position, this.playerAddr);
-
-    this.game.physics.arcade.overlap(this.player, this.dotGroup, this.dotEaten, null, this);
-
-    this.game.physics.arcade.overlap(this.player, this.playersGroup, this.playerEaten, null, this);
-
-    this.followMouse();
-
-    const { x, y } = this.spriteCenter(this.player);
-
-    this.playerNameText.x = x;
-    this.playerNameText.y = y;
-
-    if (this.spaceKey.isDown && !isForked) {
-      console.log("Fork!");
-      // this.forkPlayer(this.player);
-      // isForked = true;
-    }
-
-    if(this.pKey.isDown) {
-      this.prunePlayer(this.player);
-    }
-  }
-
   prunePlayer(player) {
     //reduce mass
     player.body.mass -= 1;
 
     console.log('Prune', player.body.x, player.body.y);
 
-    this.addDot({ x: player.body.x + this.randomIntFromInterval(-10, 10), 
-        y: player.body.y + this.randomIntFromInterval(-10, 10) });
+    this.addDot({ x: player.body.x + randomIntFromInterval(-10, 10), 
+        y: player.body.y + randomIntFromInterval(-10, 10) });
 
   }
 
@@ -324,9 +326,5 @@ export default class extends Phaser.State {
     const y = Math.floor(sprite.y + (sprite.height / 3));
 
     return { x, y };
-  }
-
-  randomIntFromInterval(min,max) {
-    return Math.floor(Math.random()*(max-min+1)+min);
   }
 }
