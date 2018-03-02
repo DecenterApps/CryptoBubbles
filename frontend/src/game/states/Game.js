@@ -1,6 +1,7 @@
 /* globals __DEV__ */
 import Phaser from 'phaser';
 import Player from '../objects/Player';
+import Dot from '../objects/Dot';
 
 import web3Helper from '../helpers/web3Helper';
 import scoreboard from '../helpers/scoreboard';
@@ -32,11 +33,12 @@ export default class extends Phaser.State {
     game.add.tileSprite(0, 0, game.world.width, game.world.height, 'background');
 
     // create user and dot groups for collision checking
-    this.dotGroup = this.game.add.group();
     this.playersGroup = this.game.add.group();
 
+    game.dotGroup = this.game.add.group();
+
     // add the current player to the game
-    this.player = this.addPlayer(this.generatePlayerPos(), this.playerAddr, JSON.parse(this.playerInfo).userName);
+    //this.player = this.addPlayer(this.generatePlayerPos(), this.playerAddr, JSON.parse(this.playerInfo).userName);
 
     this.currentPlayer = new Player(game, 50, 50, this.getSprite());
 
@@ -45,16 +47,24 @@ export default class extends Phaser.State {
     this.pKey = game.input.keyboard.addKey(Phaser.Keyboard.P);
 
     this.spaceKey.onDown.add(this.currentPlayer.fork, this.currentPlayer);
-
-    //game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR, Phaser.Keyboard.P ]);
+    this.pKey.onDown.add(this.currentPlayer.prune, this.currentPlayer);
 
     this.setUpText();
 
+    for(let i = 0; i < 200; ++i) {
+      const pos = {
+          x: randomIntFromInterval(1, GAME_WIDTH),
+          y: randomIntFromInterval(1, GAME_HEIGHT)
+      };
+
+      const dot = new Dot(game, pos.x, pos.y, 'dot');
+  }
+
     this.socket = socketHelper.socket;
 
-    this.socket.emit('join-game', this.player.position, this.playerAddr);
+    //this.socket.emit('join-game', this.player.position, this.playerAddr);
 
-    this.setupListeners();
+    //this.setupListeners();
 
     this.showTimer();
 
@@ -63,29 +73,22 @@ export default class extends Phaser.State {
 
 
   update() {
-    this.socket.emit('move', this.player.position, this.playerAddr);
+    //this.socket.emit('move', this.player.position, this.playerAddr);
 
-    this.game.physics.arcade.overlap(this.player, this.dotGroup, this.dotEaten, null, this);
+    this.game.physics.arcade.overlap(this.currentPlayer, game.dotGroup, this.dotEaten, null, this);
 
-    this.game.physics.arcade.overlap(this.player, this.playersGroup, this.playerEaten, null, this);
+    // this.game.physics.arcade.overlap(this.player, this.playersGroup, this.playerEaten, null, this);
 
     //this.followMouse();
 
-    const { x, y } = this.spriteCenter(this.player);
+    // const { x, y } = this.spriteCenter(this.player);
 
-    this.playerNameText.x = x;
-    this.playerNameText.y = y;
+    // this.playerNameText.x = x;
+    // this.playerNameText.y = y;
 
-    // if (this.spaceKey.isDown && !isForked) {
-    //   console.log("Fork!");
-    //   // this.forkPlayer(this.player);
-    //   isForked = true;
-    //   this.currentPlayer.fork();
+    // if(this.pKey.isDown) {
+    //   this.prunePlayer(this.player);
     // }
-
-    if(this.pKey.isDown) {
-      this.prunePlayer(this.player);
-    }
   }
 
   getSprite() {
@@ -164,19 +167,23 @@ export default class extends Phaser.State {
   }
 
   dotEaten(player, dot) {
-    this.socket.emit('dot-eaten', dot.position, this.playerAddr);
-    dot.kill();
-    this.addToScore(this.playerAddr, 1);
 
-    const currScore = scoreboard.getScore(this.playerAddr);
-    player.scale.set(1 + currScore/100, 1 + currScore/100);
-    player.body.mass += 1;
 
-    if (playersSpeed > 30) {
-      playersSpeed -= 1;
-    }
+
+    this.currentPlayer.dotEaten(dot);
+    // this.socket.emit('dot-eaten', dot.position, this.playerAddr);
+    // dot.kill();
+    // this.addToScore(this.playerAddr, 1);
+
+    // const currScore = scoreboard.getScore(this.playerAddr);
+    // player.scale.set(1 + currScore/100, 1 + currScore/100);
+    // player.body.mass += 1;
+
+    // if (playersSpeed > 30) {
+    //   playersSpeed -= 1;
+    // }
   
-    this.updateScoreText(currScore);
+    // this.updateScoreText(currScore);
   }
 
   playerEaten(player1, player2) {

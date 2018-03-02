@@ -3,7 +3,7 @@ const Web3 = require('web3');
 require('dotenv').config();
 
 const LOCAL_NETWORK = "http://localhost:7545";
-const ROPSTEN_NETWORK = "https://ropsten.decenter.com";
+const ROPSTEN_NETWORK = "https://ropsten.infura.io";
 
 const web3 = new Web3(new Web3.providers.HttpProvider(ROPSTEN_NETWORK));
 

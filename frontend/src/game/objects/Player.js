@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 import { STARTING_PLAYERS_SPEED, playerNameStyle} from '../helpers/constants';
 import { randomIntFromInterval } from '../helpers/utils';
 
+import Dot from './Dot';
+
 export default class Player extends Phaser.Sprite {
   constructor (game, x, y, asset) {
     super(game, x, y, asset);
@@ -25,6 +27,8 @@ export default class Player extends Phaser.Sprite {
   }
 
   update () {
+    this.scale.set(1 + this.mass/100, 1 + this.mass/100);
+
     this.followMouse();
   }
 
@@ -33,8 +37,6 @@ export default class Player extends Phaser.Sprite {
     const yOffset = randomIntFromInterval(0, 20);
 
     const forkedPlayer = this.game.add.sprite(this.x + xOffset, this.y + yOffset, 'decenter');
-
-    console.log(this);
 
     this.game.physics.arcade.enable(forkedPlayer);
     forkedPlayer.anchor.setTo(0.5);
@@ -51,6 +53,22 @@ export default class Player extends Phaser.Sprite {
 
   prune() {
 
+    if (this.mass > 10) {
+      this.mass -=1;
+
+      const yOffset = randomIntFromInterval(0, 20);
+
+      if (game.input.activePointer.x < this.x - game.camera.x) {
+        new Dot(this.game, this.x + this.width, this.y + yOffset, 'dot');
+      } else {
+        new Dot(this.game, this.x - this.width, this.y + yOffset, 'dot');
+      }
+    }
+  }
+
+  dotEaten(dot) {
+    dot.kill();
+    this.mass += 1;
   }
 
   setPlayerName() {
