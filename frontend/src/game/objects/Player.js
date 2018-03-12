@@ -4,6 +4,7 @@ import { STARTING_PLAYERS_SPEED, playerNameStyle} from '../helpers/constants';
 import { randomIntFromInterval } from '../helpers/utils';
 
 import Dot from './Dot';
+import ForkedPlayer from './ForkedPlayer';
 
 export default class Player extends Phaser.Sprite {
   constructor (game, x, y, asset) {
@@ -18,6 +19,8 @@ export default class Player extends Phaser.Sprite {
     game.camera.follow(this);
 
     this.setPlayerName();
+
+    game.playersGroup.add(this);
 
     // Set stats
     this.playerSpeed = STARTING_PLAYERS_SPEED;
@@ -36,19 +39,9 @@ export default class Player extends Phaser.Sprite {
     const xOffset = randomIntFromInterval(0, 20);
     const yOffset = randomIntFromInterval(0, 20);
 
-    const forkedPlayer = this.game.add.sprite(this.x + xOffset, this.y + yOffset, 'decenter');
-
-    this.game.physics.arcade.enable(forkedPlayer);
-    forkedPlayer.anchor.setTo(0.5);
-
-    this.addChild(forkedPlayer);
-
-    this.game.add.existing(forkedPlayer);
+    const forkedPlayer = new ForkedPlayer(this.game, this.x + xOffset, this.y + yOffset, 'decenter');
 
     this.forkedPlayers.push(forkedPlayer);
-
-    forkedPlayer.body.velocity.set(20);
-
   }
 
   prune() {

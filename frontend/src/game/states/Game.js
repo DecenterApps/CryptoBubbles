@@ -33,8 +33,7 @@ export default class extends Phaser.State {
     game.add.tileSprite(0, 0, game.world.width, game.world.height, 'background');
 
     // create user and dot groups for collision checking
-    this.playersGroup = this.game.add.group();
-
+    game.playersGroup = this.game.add.group();
     game.dotGroup = this.game.add.group();
 
     // add the current player to the game
@@ -75,7 +74,7 @@ export default class extends Phaser.State {
   update() {
     //this.socket.emit('move', this.player.position, this.playerAddr);
 
-    this.game.physics.arcade.overlap(this.currentPlayer, game.dotGroup, this.dotEaten, null, this);
+    this.game.physics.arcade.overlap(game.playersGroup, game.dotGroup, this.dotEaten, null, this);
 
     // this.game.physics.arcade.overlap(this.player, this.playersGroup, this.playerEaten, null, this);
 
